@@ -97,70 +97,71 @@
     };
 
     async function processAudio() {
-        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-        const cleanToken = WIT_TOKEN.replace(/[^\x00-\x7F]/g, "").trim();
+    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+    const cleanToken = WIT_TOKEN.replace(/[^\x00-\x7F]/g, "").trim();
 
-        try {
-            const witRes = await fetch(`https://api.wit.ai/speech`, {
-                method: 'POST',
-                headers: { 
-                    'Authorization': `Bearer ${cleanToken}`,
-                    'Content-Type': 'audio/wav' 
-                },
-                body: audioBlob
-            });
+    try {
+        const witRes = await fetch(`https://api.wit.ai/speech`, {
+            method: 'POST',
+            headers: { 
+                'Authorization': `Bearer ${cleanToken}`,
+                'Content-Type': 'audio/wav' 
+            },
+            body: audioBlob
+        });
 
-            const rawResponse = await witRes.text();
-            console.log("Wit.ai 原始回傳：", rawResponse);
+        const rawResponse = await witRes.text();
+        console.log("Wit.ai 原始回傳：", rawResponse);
 
-            // --- 強化版解析邏輯 ---
-            // 由於 Wit.ai 可能回傳多個 { ... } { ... }，我們用正則表達式拆分它們
-            const jsonMatches = rawResponse.match(/\{.*?\}(?=\s*\{|$)/gs);
-            let finalStt = "";
+        // --- 強化版 JSON 抓取邏輯 ---
+        // 使用正則表達式把每一組 { ... } 拆開
+        const jsonMatches = rawResponse.match(/\{.*?\}(?=\s*\{|$)/gs);
+        let finalStt = "";
 
-            if (jsonMatches) {
-                // 從後往前找，直到找到第一個有 text 內容的 JSON
-                for (let i = jsonMatches.length - 1; i >= 0; i--) {
-                    try {
-                        const jsonObj = JSON.parse(jsonMatches[i]);
-                        if (jsonObj.text) {
-                            finalStt = jsonObj.text;
-                            break;
-                        }
-                    } catch (e) { continue; }
-                }
+        if (jsonMatches) {
+            // 從最後一個物件往回找，直到找到有文字的內容
+            for (let i = jsonMatches.length - 1; i >= 0; i--) {
+                try {
+                    const jsonObj = JSON.parse(jsonMatches[i]);
+                    if (jsonObj.text && jsonObj.text.trim() !== "") {
+                        finalStt = jsonObj.text;
+                        break;
+                    }
+                } catch (e) { continue; }
             }
-
-            if (!finalStt) {
-                sttDisplay.innerText = "(未能辨識出文字)";
-                status.innerText = "語音太短或環境太吵，請再試一次";
-                return;
-            }
-
-            sttDisplay.innerText = finalStt;
-
-            // 2. 呼叫你的 LLM (140.116.32.48)
-            const llmRes = await fetch(LLM_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    question: qidSelect.value,
-                    text: finalStt
-                })
-            });
-
-            if (!llmRes.ok) throw new Error("LLM 伺服器未回應 (請確認 VPN 或 CORS)");
-
-            const llmData = await llmRes.json();
-            aiDisplay.innerText = `${llmData.result} (${llmData.type || 'N/A'})`;
-            status.innerText = "評估完成。";
-
-        } catch (err) {
-            console.error("錯誤詳情：", err);
-            status.innerText = "失敗：" + err.message;
-            aiDisplay.innerText = "無法取得判讀結果";
         }
+
+        // 如果還是空的，代表沒辨識成功
+        if (!finalStt) {
+            sttDisplay.innerText = "(未能辨識出文字)";
+            status.innerText = "語音太短或沒聲音，請長按錄音並清楚說話。";
+            return;
+        }
+
+        sttDisplay.innerText = finalStt;
+
+        // 2. 呼叫你的 LLM (140.116.32.48)
+        const llmRes = await fetch(LLM_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                question: qidSelect.value, // 確保這裏傳送了題號 (1A-11)
+                text: finalStt
+            })
+        });
+
+        if (!llmRes.ok) throw new Error("LLM 伺服器拒絕連線 (請檢查 VPN/CORS)");
+
+        const llmData = await llmRes.json();
+        aiDisplay.innerText = `${llmData.result} (${llmData.type || 'N/A'})`;
+        status.innerText = "評估完成。";
+
+    } catch (err) {
+        console.error("錯誤詳情：", err);
+        status.innerText = "失敗：" + err.message;
+        aiDisplay.innerText = "連線或解析失敗";
     }
+}
 </script>
 </body>
 </html>
