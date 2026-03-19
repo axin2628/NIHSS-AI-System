@@ -1,216 +1,138 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NIHSS 語音評估（WAV版）</title>
-
-<style>
-body { font-family: sans-serif; text-align: center; padding: 20px; background: #f0f2f5; }
-.container { background: white; padding: 20px; border-radius: 10px; max-width: 500px; margin: auto; }
-button { padding: 15px; font-size: 18px; width: 100%; margin-top: 10px; }
-select { width: 100%; padding: 10px; margin-bottom: 15px; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NIHSS 語音評估系統 v3.0 (WAV 版)</title>
+    <script src="https://cdn.rawgit.com/mattdiamond/Recorderjs/08194bab/dist/recorder.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; text-align: center; padding: 20px; background: #f0f2f5; color: #1c1e21; }
+        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); display: inline-block; max-width: 480px; width: 100%; box-sizing: border-box; }
+        h2 { color: #1877f2; margin-bottom: 25px; }
+        label { display: block; text-align: left; margin-bottom: 10px; font-weight: 600; color: #4b4f56; }
+        select { padding: 12px; font-size: 16px; margin-bottom: 20px; width: 100%; border: 1px solid #dddfe2; border-radius: 6px; background-color: #f5f6f7; }
+        button { padding: 16px; font-size: 18px; cursor: pointer; border: none; border-radius: 6px; width: 100%; font-weight: bold; transition: 0.2s; }
+        .record-off { background-color: #1877f2; color: white; }
+        .record-on { background-color: #fa3e3e; color: white; animation: blink 1.5s infinite; }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        #status { margin-top: 15px; color: #8d949e; font-size: 14px; min-height: 20px; }
+        .result-box { margin-top: 30px; text-align: left; border-top: 1px solid #dddfe2; padding-top: 20px; }
+        .res-card { background: #f0f2f5; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 5px solid #1877f2; }
+        .res-label { font-size: 12px; color: #606770; font-weight: bold; text-transform: uppercase; }
+        .res-content { display: block; margin-top: 5px; font-size: 16px; font-weight: 700; color: #1c1e21; }
+    </style>
 </head>
-
 <body>
 
 <div class="container">
-<h2>NIHSS 語音評估（WAV穩定版）</h2>
+    <h2>NIHSS 臨床評估 AI 測試</h2>
+    
+    <label for="questionId">1. 選擇評估題號：</label>
+    <select id="questionId">
+        <option value="1A">1A: 意識程度</option>
+        <option value="1B">1B: 意識提問</option>
+        <option value="1C">1C: 意識指令</option>
+        <option value="2">2: 最佳眼球運動</option>
+        <option value="3">3: 視野</option>
+        <option value="4">4: 面癱</option>
+        <option value="5aL">5aL: 左上肢運動</option>
+        <option value="5bR">5bR: 右上肢運動</option>
+        <option value="6aL">6aL: 左下肢運動</option>
+        <option value="6bR">6bR: 右下肢運動</option>
+        <option value="7">7: 肢體運動失調</option>
+        <option value="8">8: 感覺</option>
+        <option value="9">9: 最佳語言</option>
+        <option value="10">10: 構音障礙</option>
+        <option value="11">11: 忽視症</option>
+    </select>
 
-<label>1. 選擇評估題號：</label>
-<select id="questionId">
-    <option value="1A">1A: 意識程度</option>
-    <option value="1B">1B: 意識提問</option>
-    <option value="1C">1C: 意識指令</option>
-    <option value="2">2: 最佳眼球運動</option>
-    <option value="3">3: 視野</option>
-    <option value="4">4: 面癱</option>
-    <option value="5aL">5aL: 左上肢運動</option>
-    <option value="5bR">5bR: 右上肢運動</option>
-    <option value="6aL">6aL: 左下肢運動</option>
-    <option value="6bR">6bR: 右下肢運動</option>
-    <option value="7">7: 肢體運動失調</option>
-    <option value="8">8: 感覺</option>
-    <option value="9">9: 最佳語言</option>
-    <option value="10">10: 構音障礙</option>
-    <option value="11">11: 忽視症</option>
-</select>
+    <button id="btn" class="record-off">開始錄音</button>
+    <div id="status">準備就緒</div>
 
-<button id="btn">開始錄音</button>
-<p id="status">準備就緒</p>
-
-<h3>STT：</h3>
-<p id="stt">等待辨識</p>
-
-<h3>LLM：</h3>
-<p id="llm">等待分析</p>
-
+    <div class="result-box">
+        <div class="res-card">
+            <span class="res-label">識別內容 (STT)</span>
+            <span id="stt-text" class="res-content">等待辨識...</span>
+        </div>
+        <div class="res-card">
+            <span class="res-label">AI 判讀建議 (LLM)</span>
+            <span id="ai-res" class="res-content">等待評估...</span>
+        </div>
+    </div>
 </div>
 
 <script>
-let audioContext;
-let processor;
-let input;
-let globalStream;
-let audioData = [];
+    let audioContext;
+    let rec;
+    let input;
+    const btn = document.getElementById('btn');
+    const status = document.getElementById('status');
 
-const btn = document.getElementById("btn");
-const status = document.getElementById("status");
-const sttText = document.getElementById("stt");
-const llmText = document.getElementById("llm");
-const qid = document.getElementById("questionId");
+    // --- 設定區 ---
+    const WIT_TOKEN = "2Z3JO2DMTHIIFKXE46XBDAW445LKTBUT"; 
+    const LLM_URL = "http://140.116.32.48:8000/evaluate";
 
-// ⚠️ 設定
-const WIT_TOKEN = "2Z3JO2DMTHIIFKXE46XBDAW445LKTBUT";
-const LLM_URL = "http://140.116.32.48:8000/evaluate";
+    btn.onclick = async () => {
+        if (!rec || !rec.recording) {
+            // 開始錄音流程
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            input = audioContext.createMediaStreamSource(stream);
+            // 初始化 Recorder
+            rec = new Recorder(input, { numChannels: 1 }); // 單聲道辨識率最高
+            rec.record();
 
-btn.onclick = async () => {
-    if (!audioContext) {
-        startRecording();
-    } else {
-        stopRecording();
-    }
-};
-
-async function startRecording() {
-    audioData = [];
-
-    globalStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-    audioContext = new AudioContext({ sampleRate: 16000 });
-    input = audioContext.createMediaStreamSource(globalStream);
-
-    processor = audioContext.createScriptProcessor(4096, 1, 1);
-
-    processor.onaudioprocess = (e) => {
-        audioData.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+            btn.innerText = "停止錄音";
+            btn.className = "record-on";
+            status.innerText = "正在錄製標準 WAV 格式...";
+        } else {
+            // 停止錄音
+            rec.stop();
+            btn.innerText = "開始錄音";
+            btn.className = "record-off";
+            status.innerText = "正在處理高品質 WAV 並分析...";
+            
+            // 匯出 WAV 並處理
+            rec.exportWAV(processAudio);
+        }
     };
 
-    input.connect(processor);
-    processor.connect(audioContext.destination);
+    async function processAudio(blob) {
+        const cleanToken = WIT_TOKEN.replace(/[^\x00-\x7F]/g, "").trim();
 
-    btn.innerText = "停止錄音";
-    status.innerText = "錄音中...";
-}
+        try {
+            const witRes = await fetch(`https://api.wit.ai/speech`, {
+                method: 'POST',
+                headers: { 
+                    'Authorization': `Bearer ${cleanToken}`,
+                    'Content-Type': 'audio/wav' 
+                },
+                body: blob
+            });
 
-function stopRecording() {
-    processor.disconnect();
-    input.disconnect();
-    audioContext.close();
+            const rawText = await witRes.text();
+            const jsonLines = rawText.trim().split('\n');
+            const lastJson = JSON.parse(jsonLines[jsonLines.length - 1]);
+            const sttText = lastJson.text || "辨識失敗";
+            document.getElementById('stt-text').innerText = sttText;
 
-    btn.innerText = "開始錄音";
-    status.innerText = "轉換音訊中...";
+            // 傳給 LLM
+            const llmRes = await fetch(LLM_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    question: document.getElementById('questionId').value,
+                    text: sttText
+                })
+            });
+            const llmData = await llmRes.json();
+            document.getElementById('ai-res').innerText = `${llmData.result} (${llmData.type})`;
+            status.innerText = "評估完成！";
 
-    const wavBlob = encodeWAV(audioData);
-
-    console.log("WAV size:", wavBlob.size);
-
-    sendToWit(wavBlob);
-
-    audioContext = null;
-}
-
-// ===== WAV 編碼 =====
-function encodeWAV(buffers) {
-    let length = 0;
-    buffers.forEach(b => length += b.length);
-
-    const data = new Float32Array(length);
-    let offset = 0;
-
-    buffers.forEach(b => {
-        data.set(b, offset);
-        offset += b.length;
-    });
-
-    const buffer = new ArrayBuffer(44 + data.length * 2);
-    const view = new DataView(buffer);
-
-    writeString(view, 0, 'RIFF');
-    view.setUint32(4, 36 + data.length * 2, true);
-    writeString(view, 8, 'WAVE');
-
-    writeString(view, 12, 'fmt ');
-    view.setUint32(16, 16, true);
-    view.setUint16(20, 1, true);
-    view.setUint16(22, 1, true);
-    view.setUint32(24, 16000, true);
-    view.setUint32(28, 32000, true);
-    view.setUint16(32, 2, true);
-    view.setUint16(34, 16, true);
-
-    writeString(view, 36, 'data');
-    view.setUint32(40, data.length * 2, true);
-
-    floatTo16BitPCM(view, 44, data);
-
-    return new Blob([view], { type: 'audio/wav' });
-}
-
-function floatTo16BitPCM(output, offset, input) {
-    for (let i = 0; i < input.length; i++, offset += 2) {
-        let s = Math.max(-1, Math.min(1, input[i]));
-        output.setInt16(offset, s * 0x7fff, true);
-    }
-}
-
-function writeString(view, offset, string) {
-    for (let i = 0; i < string.length; i++) {
-        view.setUint8(offset + i, string.charCodeAt(i));
-    }
-}
-
-// ===== Wit + LLM =====
-async function sendToWit(blob) {
-
-    status.innerText = "送到 Wit.ai...";
-
-    try {
-        const res = await fetch("https://api.wit.ai/speech?v=20210928", {
-            method: "POST",
-            headers: {
-                "Authorization": "Bearer " + WIT_TOKEN,
-                "Content-Type": "audio/wav"
-            },
-            body: blob
-        });
-
-        const text = await res.text();
-        console.log("Wit:", text);
-
-        const match = text.match(/"text":"(.*?)"/);
-        const finalText = match ? match[1] : "";
-
-        if (!finalText) {
-            sttText.innerText = "❌ 辨識不到";
-            status.innerText = "Wit 沒聽到";
-            return;
+        } catch (err) {
+            status.innerText = "錯誤: " + err.message;
         }
-
-        sttText.innerText = finalText;
-        status.innerText = "送到 LLM 分析...";
-
-        // 🔥 傳 JSON（含 questionId）
-        const llmRes = await fetch(LLM_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                question: qid.value,
-                text: finalText
-            })
-        });
-
-        const data = await llmRes.json();
-
-        llmText.innerText = `${data.result} (${data.type || ""})`;
-        status.innerText = "完成 ✅";
-
-    } catch (err) {
-        status.innerText = "錯誤：" + err.message;
     }
-}
 </script>
-
 </body>
 </html>
