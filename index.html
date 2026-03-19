@@ -101,7 +101,6 @@
         const cleanToken = WIT_TOKEN.replace(/[^\x00-\x7F]/g, "").trim();
 
         try {
-            // 1. 呼叫 Wit.ai STT (增加對 Streamed JSON 的相容性處理)
             const witRes = await fetch(`https://api.wit.ai/speech`, {
                 method: 'POST',
                 headers: { 
@@ -112,22 +111,35 @@
             });
 
             const rawResponse = await witRes.text();
-            
-            // 核心修復：使用正規表達式將相連的 JSON 物件拆開，只抓取最後一個完整結果
-            const jsonStrings = rawResponse.trim().split(/\n|\r/);
+            console.log("Wit.ai 原始回傳：", rawResponse);
+
+            // --- 強化版解析邏輯 ---
+            // 由於 Wit.ai 可能回傳多個 { ... } { ... }，我們用正則表達式拆分它們
+            const jsonMatches = rawResponse.match(/\{.*?\}(?=\s*\{|$)/gs);
             let finalStt = "";
-            
-            try {
-                const lastValidJson = JSON.parse(jsonStrings[jsonStrings.length - 1]);
-                finalStt = lastValidJson.text || "辨識無效";
-            } catch (e) {
-                console.error("Wit.ai JSON 解析失敗，原始內容：", rawResponse);
-                throw new Error("STT 格式解析失敗");
+
+            if (jsonMatches) {
+                // 從後往前找，直到找到第一個有 text 內容的 JSON
+                for (let i = jsonMatches.length - 1; i >= 0; i--) {
+                    try {
+                        const jsonObj = JSON.parse(jsonMatches[i]);
+                        if (jsonObj.text) {
+                            finalStt = jsonObj.text;
+                            break;
+                        }
+                    } catch (e) { continue; }
+                }
+            }
+
+            if (!finalStt) {
+                sttDisplay.innerText = "(未能辨識出文字)";
+                status.innerText = "語音太短或環境太吵，請再試一次";
+                return;
             }
 
             sttDisplay.innerText = finalStt;
 
-            // 2. 呼叫 LLM 評估 (完全對齊 Unity AIRequestData 格式)
+            // 2. 呼叫你的 LLM (140.116.32.48)
             const llmRes = await fetch(LLM_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -137,7 +149,7 @@
                 })
             });
 
-            if (!llmRes.ok) throw new Error("LLM 伺服器未回應 (請檢查 VPN/CORS)");
+            if (!llmRes.ok) throw new Error("LLM 伺服器未回應 (請確認 VPN 或 CORS)");
 
             const llmData = await llmRes.json();
             aiDisplay.innerText = `${llmData.result} (${llmData.type || 'N/A'})`;
@@ -146,7 +158,7 @@
         } catch (err) {
             console.error("錯誤詳情：", err);
             status.innerText = "失敗：" + err.message;
-            aiDisplay.innerText = "連線中斷或伺服器異常";
+            aiDisplay.innerText = "無法取得判讀結果";
         }
     }
 </script>
