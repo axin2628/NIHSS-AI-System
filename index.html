@@ -5,25 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NIHSS 語音評估系統 v2.2</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; padding: 20px; background: #f0f2f5; color: #1c1e21; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; text-align: center; padding: 20px; background: #f0f2f5; color: #1c1e21; }
         .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); display: inline-block; max-width: 480px; width: 100%; box-sizing: border-box; }
         h2 { color: #1877f2; margin-bottom: 25px; }
         label { display: block; text-align: left; margin-bottom: 10px; font-weight: 600; color: #4b4f56; }
         select { padding: 12px; font-size: 16px; margin-bottom: 20px; width: 100%; border: 1px solid #dddfe2; border-radius: 6px; background-color: #f5f6f7; }
-        button { padding: 16px; font-size: 18px; cursor: pointer; border: none; border-radius: 6px; width: 100%; font-weight: bold; transition: background 0.2s; }
+        button { padding: 16px; font-size: 18px; cursor: pointer; border: none; border-radius: 6px; width: 100%; font-weight: bold; transition: 0.2s; }
         .record-off { background-color: #1877f2; color: white; }
-        .record-on { background-color: #fa3e3e; color: white; }
+        .record-on { background-color: #fa3e3e; color: white; animation: blink 1.5s infinite; }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
         #status { margin-top: 15px; color: #8d949e; font-size: 14px; min-height: 20px; }
         .result-box { margin-top: 30px; text-align: left; border-top: 1px solid #dddfe2; padding-top: 20px; }
         .res-card { background: #f0f2f5; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 5px solid #1877f2; }
-        .res-label { font-size: 13px; color: #606770; text-transform: uppercase; letter-spacing: 0.5px; }
+        .res-label { font-size: 12px; color: #606770; font-weight: bold; text-transform: uppercase; }
         .res-content { display: block; margin-top: 5px; font-size: 16px; font-weight: 700; color: #1c1e21; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>NIHSS 語音辨識 測試</h2>
+    <h2>NIHSS 臨床評估 AI 測試</h2>
     
     <label for="questionId">1. 選擇評估題號：</label>
     <select id="questionId">
@@ -68,7 +69,7 @@
     const aiDisplay = document.getElementById('ai-res');
     const qidSelect = document.getElementById('questionId');
 
-    // --- 請填入您的 Token ---
+    // --- 設定區 ---
     const WIT_TOKEN = "2Z3JO2DMTHIIFKXE46XBDAW445LKTBUT"; 
     const LLM_URL = "http://140.116.32.48:8000/evaluate";
 
@@ -81,17 +82,17 @@
                 mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
                 mediaRecorder.onstop = processAudio;
                 mediaRecorder.start();
-                btn.innerText = "停止錄音";
+                btn.innerText = "停止錄音並分析";
                 btn.className = "record-on";
-                status.innerText = "錄音中...";
+                status.innerText = "正在錄製臨床評估語音...";
             } catch (err) {
-                status.innerText = "請確保使用 HTTPS 並開啟麥克風權限";
+                status.innerText = "錯誤：請確認網址為 HTTPS 且已允許麥克風權限";
             }
         } else {
             mediaRecorder.stop();
             btn.innerText = "開始錄音";
             btn.className = "record-off";
-            status.innerText = "傳送中...";
+            status.innerText = "傳送至 Wit.ai 與 LLM 中...";
         }
     };
 
@@ -100,7 +101,7 @@
         const cleanToken = WIT_TOKEN.replace(/[^\x00-\x7F]/g, "").trim();
 
         try {
-            // 1. Wit.ai STT (針對瀏覽器 fetch 優化解析)
+            // 1. 呼叫 Wit.ai STT (增加對 Streamed JSON 的相容性處理)
             const witRes = await fetch(`https://api.wit.ai/speech`, {
                 method: 'POST',
                 headers: { 
@@ -112,23 +113,21 @@
 
             const rawResponse = await witRes.text();
             
-            // 重要：修正 SyntaxError。Wit.ai 回傳的是多個 JSON 物件相連
-            // 我們使用正則表達式或 split 來抓取最後一個完整的 JSON
-            const jsonObjects = rawResponse.trim().split(/\r?\n/);
+            // 核心修復：使用正規表達式將相連的 JSON 物件拆開，只抓取最後一個完整結果
+            const jsonStrings = rawResponse.trim().split(/\n|\r/);
             let finalStt = "";
             
             try {
-                const lastEntry = JSON.parse(jsonObjects[jsonObjects.length - 1]);
-                finalStt = lastEntry.text || "辨識內容為空";
+                const lastValidJson = JSON.parse(jsonStrings[jsonStrings.length - 1]);
+                finalStt = lastValidJson.text || "辨識無效";
             } catch (e) {
-                console.error("JSON 解析失敗，原始資料：", rawResponse);
-                throw new Error("STT 回傳格式錯誤");
+                console.error("Wit.ai JSON 解析失敗，原始內容：", rawResponse);
+                throw new Error("STT 格式解析失敗");
             }
 
             sttDisplay.innerText = finalStt;
 
-            // 2. 呼叫你的 LLM (140.116.32.48)
-            // 這裡完全比照 Unity AIRequestData 格式
+            // 2. 呼叫 LLM 評估 (完全對齊 Unity AIRequestData 格式)
             const llmRes = await fetch(LLM_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -138,16 +137,16 @@
                 })
             });
 
-            if (!llmRes.ok) throw new Error("LLM 伺服器拒絕連線 (CORS?)");
+            if (!llmRes.ok) throw new Error("LLM 伺服器未回應 (請檢查 VPN/CORS)");
 
             const llmData = await llmRes.json();
             aiDisplay.innerText = `${llmData.result} (${llmData.type || 'N/A'})`;
             status.innerText = "評估完成。";
 
         } catch (err) {
-            console.error("Error Detail:", err);
-            status.innerText = "失敗: " + err.message;
-            aiDisplay.innerText = "無法取得判讀結果";
+            console.error("錯誤詳情：", err);
+            status.innerText = "失敗：" + err.message;
+            aiDisplay.innerText = "連線中斷或伺服器異常";
         }
     }
 </script>
