@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NIHSS 語音評估系統 v3.1</title>
-    <script src="https://cdn.rawgit.com/mattdiamond/Recorderjs/08194bab/dist/recorder.js"></script>
+    <title>NIHSS 語音評估系統 v3.2</title>
+    <script src="https://cdn.jsdelivr.net/gh/mattdiamond/Recorderjs@master/dist/recorder.js"></script>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; text-align: center; padding: 20px; background: #f0f2f5; color: #1c1e21; }
         .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); display: inline-block; max-width: 480px; width: 100%; box-sizing: border-box; }
@@ -12,17 +12,13 @@
         label { display: block; text-align: left; margin-bottom: 10px; font-weight: 600; color: #4b4f56; }
         select { padding: 12px; font-size: 16px; margin-bottom: 20px; width: 100%; border: 1px solid #dddfe2; border-radius: 6px; background-color: #f5f6f7; }
         button { padding: 16px; font-size: 18px; cursor: pointer; border: none; border-radius: 6px; width: 100%; font-weight: bold; transition: 0.2s; }
-        
-        /* 按鈕顏色狀態 */
         .record-off { background-color: #1877f2; color: white; }
         .record-on { background-color: #fa3e3e; color: white; animation: blink 1.5s infinite; }
-        
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
-        
-        #status { margin-top: 15px; color: #8d949e; font-size: 14px; min-height: 20px; font-style: italic; }
+        #status { margin-top: 15px; color: #8d949e; font-size: 14px; min-height: 20px; }
         .result-box { margin-top: 30px; text-align: left; border-top: 1px solid #dddfe2; padding-top: 20px; }
         .res-card { background: #f0f2f5; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 5px solid #1877f2; }
-        .res-label { font-size: 12px; color: #606770; font-weight: bold; text-transform: uppercase; }
+        .res-label { font-size: 12px; color: #606770; font-weight: bold; }
         .res-content { display: block; margin-top: 5px; font-size: 16px; font-weight: 700; color: #1c1e21; }
     </style>
 </head>
@@ -50,8 +46,8 @@
         <option value="11">11: 忽視症</option>
     </select>
 
-    <button id="btn" class="record-off">開始錄音</button>
-    <div id="status">準備就緒</div>
+    <button id="btn" class="record-off">載入系統中...</button>
+    <div id="status">檢查外掛組件...</div>
 
     <div class="result-box">
         <div class="res-card">
@@ -66,7 +62,6 @@
 </div>
 
 <script>
-    // 全域變數定義
     let audioContext;
     let rec;
     let input;
@@ -76,76 +71,58 @@
     const status = document.getElementById('status');
     const sttDisplay = document.getElementById('stt-text');
     const aiDisplay = document.getElementById('ai-res');
-    const qidSelect = document.getElementById('questionId');
 
-    // --- 設定區 ---
     const WIT_TOKEN = "2Z3JO2DMTHIIFKXE46XBDAW445LKTBUT"; 
     const LLM_URL = "http://140.116.32.48:8000/evaluate";
 
-    // 點擊事件處理
-    btn.onclick = async function() {
-        // 如果還沒開始錄音
-        if (!rec || !rec.recording) {
-            try {
-                status.innerText = "正在請求麥克風權限...";
-                
-                // 1. 取得麥克風流
-                gumStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                
-                // 2. 初始化 AudioContext (解決瀏覽器自動播放限制)
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                input = audioContext.createMediaStreamSource(gumStream);
-                
-                // 3. 初始化 Recorder.js (來自 cdn.rawgit.com)
-                rec = new Recorder(input, { numChannels: 1 });
-                
-                // 4. 開始錄製
-                rec.record();
-
-                // 5. 更新 UI 狀態
-                btn.innerText = "停止錄音並分析";
-                btn.className = "record-on";
-                status.innerText = "正在錄製標準 WAV 格式中...";
-                console.log("錄音已開始");
-
-            } catch (err) {
-                console.error(err);
-                status.innerText = "錯誤：無法開啟麥克風 (" + err.message + ")";
-            }
+    // --- 檢查外掛是否載入成功 ---
+    window.onload = function() {
+        if (typeof Recorder !== "undefined") {
+            btn.innerText = "開始錄音";
+            status.innerText = "系統就緒";
         } else {
-            // 如果正在錄音，則執行停止
-            try {
-                status.innerText = "正在處理高品質音訊...";
-                
-                // 1. 停止 Recorder
-                rec.stop();
-                
-                // 2. 關閉麥克風硬體燈號
-                gumStream.getAudioTracks()[0].stop();
-                
-                // 3. 更新 UI
-                btn.innerText = "開始錄音";
-                btn.className = "record-off";
-                
-                // 4. 匯出 WAV 並自動觸發 processAudio 函式
-                rec.exportWAV(processAudio);
-                console.log("錄音已停止，準備分析");
-
-            } catch (err) {
-                console.error(err);
-                status.innerText = "停止錄音時發生錯誤";
-            }
+            status.innerText = "錯誤：無法載入錄音組件，請檢查網路。";
+            btn.disabled = true;
         }
     };
 
-    // 處理音訊辨識與傳送
+    btn.onclick = async function() {
+        if (typeof Recorder === "undefined") {
+            alert("錄音組件尚未載入，請重新整理頁面。");
+            return;
+        }
+
+        if (!rec || !rec.recording) {
+            try {
+                gumStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+                input = audioContext.createMediaStreamSource(gumStream);
+                
+                // 這裡就是報錯點，我們確保它已經載入
+                rec = new Recorder(input, { numChannels: 1 });
+                rec.record();
+
+                btn.innerText = "停止錄音並分析";
+                btn.className = "record-on";
+                status.innerText = "正在錄音 (標準 16kHz WAV)...";
+            } catch (err) {
+                status.innerText = "無法開啟麥克風: " + err.message;
+            }
+        } else {
+            rec.stop();
+            gumStream.getAudioTracks()[0].stop();
+            btn.innerText = "開始錄音";
+            btn.className = "record-off";
+            status.innerText = "正在處理音訊...";
+            rec.exportWAV(processAudio);
+        }
+    };
+
     async function processAudio(blob) {
-        // 清理 Token 雜質
         const cleanToken = WIT_TOKEN.replace(/[^\x00-\x7F]/g, "").trim();
-        status.innerText = "正在連線至 Wit.ai 轉文字...";
+        status.innerText = "正在辨識語音...";
 
         try {
-            // 1. 發送到 Wit.ai
             const witRes = await fetch(`https://api.wit.ai/speech`, {
                 method: 'POST',
                 headers: { 
@@ -155,12 +132,7 @@
                 body: blob
             });
 
-            if (!witRes.ok) throw new Error("Wit.ai 連線失敗");
-
             const rawResponse = await witRes.text();
-            console.log("Wit.ai 原生回傳：", rawResponse);
-
-            // 2. 解析多重 JSON 格式 (Wit.ai 串流特性)
             const jsonMatches = rawResponse.match(/\{.*?\}(?=\s*\{|$)/gs);
             let finalStt = "";
 
@@ -168,43 +140,34 @@
                 for (let i = jsonMatches.length - 1; i >= 0; i--) {
                     try {
                         const jsonObj = JSON.parse(jsonMatches[i]);
-                        if (jsonObj.text && jsonObj.text.trim() !== "") {
-                            finalStt = jsonObj.text;
-                            break;
-                        }
+                        if (jsonObj.text) { finalStt = jsonObj.text; break; }
                     } catch (e) { continue; }
                 }
             }
 
             if (!finalStt) {
-                sttDisplay.innerText = "(未能辨識出文字)";
-                status.innerText = "請確保錄音時間超過 2 秒且說話清晰。";
+                status.innerText = "未能辨識文字，請再試一次。";
                 return;
             }
 
             sttDisplay.innerText = finalStt;
-            status.innerText = "正在傳送至成大 LLM 判讀題號 " + qidSelect.value + "...";
+            status.innerText = "正在傳送至 LLM...";
 
-            // 3. 發送到 LLM 伺服器 (140.116.32.48)
             const llmRes = await fetch(LLM_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    question: qidSelect.value,
+                    question: document.getElementById('questionId').value,
                     text: finalStt
                 })
             });
 
-            if (!llmRes.ok) throw new Error("LLM 伺服器拒絕連線 (請檢查 VPN/CORS)");
-
             const llmData = await llmRes.json();
             aiDisplay.innerText = `${llmData.result} (${llmData.type || 'N/A'})`;
-            status.innerText = "評估完成。";
+            status.innerText = "評估完成！";
 
         } catch (err) {
-            console.error("錯誤詳情：", err);
-            status.innerText = "失敗：" + err.message;
-            aiDisplay.innerText = "無法取得判讀結果";
+            status.innerText = "連線失敗: " + err.message;
         }
     }
 </script>
