@@ -97,32 +97,35 @@
     };
 
     async function processAudio() {
-    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+    // 1. 強化音訊封裝
+    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' }); 
     const cleanToken = WIT_TOKEN.replace(/[^\x00-\x7F]/g, "").trim();
 
     try {
+        status.innerText = "正在上傳音訊至 Wit.ai...";
+        
+        // 這裡我們把 Content-Type 改成 audio/webm，讓 Wit.ai 自己去 decode
         const witRes = await fetch(`https://api.wit.ai/speech`, {
             method: 'POST',
             headers: { 
                 'Authorization': `Bearer ${cleanToken}`,
-                'Content-Type': 'audio/wav' 
+                'Content-Type': 'audio/webm' 
             },
             body: audioBlob
         });
 
         const rawResponse = await witRes.text();
-        console.log("Wit.ai 原始回傳：", rawResponse);
+        console.log("Wit.ai 原始回傳內容：", rawResponse);
 
-        // --- 強化版 JSON 抓取邏輯 ---
-        // 使用正則表達式把每一組 { ... } 拆開
+        // 檢查是否包含 "text" 欄位
         const jsonMatches = rawResponse.match(/\{.*?\}(?=\s*\{|$)/gs);
         let finalStt = "";
 
         if (jsonMatches) {
-            // 從最後一個物件往回找，直到找到有文字的內容
             for (let i = jsonMatches.length - 1; i >= 0; i--) {
                 try {
                     const jsonObj = JSON.parse(jsonMatches[i]);
+                    // 只要 text 不是空的就採用
                     if (jsonObj.text && jsonObj.text.trim() !== "") {
                         finalStt = jsonObj.text;
                         break;
@@ -131,35 +134,32 @@
             }
         }
 
-        // 如果還是空的，代表沒辨識成功
         if (!finalStt) {
-            sttDisplay.innerText = "(未能辨識出文字)";
-            status.innerText = "語音太短或沒聲音，請長按錄音並清楚說話。";
+            sttDisplay.innerText = "(辨識結果為空)";
+            status.innerText = "Wit.ai 沒聽清楚，請確認網址開頭是 https 並再試一次";
             return;
         }
 
         sttDisplay.innerText = finalStt;
+        status.innerText = "正在傳送給 NIHSS LLM 判讀...";
 
-        // 2. 呼叫你的 LLM (140.116.32.48)
+        // 2. 傳送給你的 LLM (140.116.32.48)
         const llmRes = await fetch(LLM_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                question: qidSelect.value, // 確保這裏傳送了題號 (1A-11)
+                question: qidSelect.value,
                 text: finalStt
             })
         });
-
-        if (!llmRes.ok) throw new Error("LLM 伺服器拒絕連線 (請檢查 VPN/CORS)");
 
         const llmData = await llmRes.json();
         aiDisplay.innerText = `${llmData.result} (${llmData.type || 'N/A'})`;
         status.innerText = "評估完成。";
 
     } catch (err) {
-        console.error("錯誤詳情：", err);
-        status.innerText = "失敗：" + err.message;
-        aiDisplay.innerText = "連線或解析失敗";
+        console.error("Debug Error:", err);
+        status.innerText = "發生錯誤: " + err.message;
     }
 }
 </script>
