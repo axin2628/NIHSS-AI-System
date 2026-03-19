@@ -3,136 +3,210 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NIHSS STT 測試</title>
+<title>NIHSS 語音評估（WAV版）</title>
+
+<style>
+body { font-family: sans-serif; text-align: center; padding: 20px; background: #f0f2f5; }
+.container { background: white; padding: 20px; border-radius: 10px; max-width: 500px; margin: auto; }
+button { padding: 15px; font-size: 18px; width: 100%; margin-top: 10px; }
+select { width: 100%; padding: 10px; margin-bottom: 15px; }
+</style>
 </head>
 
-<body style="font-family:sans-serif; text-align:center; padding:40px;">
+<body>
 
-<h2>NIHSS 語音測試（修正版）</h2>
+<div class="container">
+<h2>NIHSS 語音評估（WAV穩定版）</h2>
+
+<label>1. 選擇評估題號：</label>
+<select id="questionId">
+    <option value="1A">1A: 意識程度</option>
+    <option value="1B">1B: 意識提問</option>
+    <option value="1C">1C: 意識指令</option>
+    <option value="2">2: 最佳眼球運動</option>
+    <option value="3">3: 視野</option>
+    <option value="4">4: 面癱</option>
+    <option value="5aL">5aL: 左上肢運動</option>
+    <option value="5bR">5bR: 右上肢運動</option>
+    <option value="6aL">6aL: 左下肢運動</option>
+    <option value="6bR">6bR: 右下肢運動</option>
+    <option value="7">7: 肢體運動失調</option>
+    <option value="8">8: 感覺</option>
+    <option value="9">9: 最佳語言</option>
+    <option value="10">10: 構音障礙</option>
+    <option value="11">11: 忽視症</option>
+</select>
 
 <button id="btn">開始錄音</button>
 <p id="status">準備就緒</p>
 
-<h3>STT 結果：</h3>
-<p id="stt">(尚未辨識)</p>
+<h3>STT：</h3>
+<p id="stt">等待辨識</p>
+
+<h3>LLM：</h3>
+<p id="llm">等待分析</p>
+
+</div>
 
 <script>
-let mediaRecorder;
-let audioChunks = [];
+let audioContext;
+let processor;
+let input;
+let globalStream;
+let audioData = [];
 
 const btn = document.getElementById("btn");
 const status = document.getElementById("status");
 const sttText = document.getElementById("stt");
+const llmText = document.getElementById("llm");
+const qid = document.getElementById("questionId");
 
-//  你的 token
+// ⚠️ 設定
 const WIT_TOKEN = "2Z3JO2DMTHIIFKXE46XBDAW445LKTBUT";
+const LLM_URL = "http://140.116.32.48:8000/evaluate";
 
 btn.onclick = async () => {
-
-    // 開始錄音
-    if (!mediaRecorder || mediaRecorder.state === "inactive") {
-
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-            // 關鍵：指定 opus codec
-            const options = { mimeType: 'audio/webm;codecs=opus' };
-            mediaRecorder = new MediaRecorder(stream, options);
-
-            audioChunks = [];
-
-            mediaRecorder.ondataavailable = (e) => {
-                if (e.data.size > 0) {
-                    audioChunks.push(e.data);
-                }
-            };
-
-            mediaRecorder.onstart = () => {
-                console.log("錄音開始");
-            };
-
-            mediaRecorder.onstop = processAudio;
-
-            mediaRecorder.start();
-
-            btn.innerText = "停止錄音";
-            status.innerText = "錄音中...";
-
-        } catch (err) {
-            status.innerText = "麥克風錯誤：" + err.message;
-        }
-
+    if (!audioContext) {
+        startRecording();
     } else {
-        // 停止錄音
-        mediaRecorder.stop();
-        btn.innerText = "開始錄音";
-        status.innerText = "處理音訊中...";
+        stopRecording();
     }
 };
 
-async function processAudio() {
+async function startRecording() {
+    audioData = [];
 
-    // 確保不是空音訊
-    if (audioChunks.length === 0) {
-        status.innerText = " 沒有錄到音訊";
-        return;
+    globalStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+    audioContext = new AudioContext({ sampleRate: 16000 });
+    input = audioContext.createMediaStreamSource(globalStream);
+
+    processor = audioContext.createScriptProcessor(4096, 1, 1);
+
+    processor.onaudioprocess = (e) => {
+        audioData.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+    };
+
+    input.connect(processor);
+    processor.connect(audioContext.destination);
+
+    btn.innerText = "停止錄音";
+    status.innerText = "錄音中...";
+}
+
+function stopRecording() {
+    processor.disconnect();
+    input.disconnect();
+    audioContext.close();
+
+    btn.innerText = "開始錄音";
+    status.innerText = "轉換音訊中...";
+
+    const wavBlob = encodeWAV(audioData);
+
+    console.log("WAV size:", wavBlob.size);
+
+    sendToWit(wavBlob);
+
+    audioContext = null;
+}
+
+// ===== WAV 編碼 =====
+function encodeWAV(buffers) {
+    let length = 0;
+    buffers.forEach(b => length += b.length);
+
+    const data = new Float32Array(length);
+    let offset = 0;
+
+    buffers.forEach(b => {
+        data.set(b, offset);
+        offset += b.length;
+    });
+
+    const buffer = new ArrayBuffer(44 + data.length * 2);
+    const view = new DataView(buffer);
+
+    writeString(view, 0, 'RIFF');
+    view.setUint32(4, 36 + data.length * 2, true);
+    writeString(view, 8, 'WAVE');
+
+    writeString(view, 12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, 1, true);
+    view.setUint32(24, 16000, true);
+    view.setUint32(28, 32000, true);
+    view.setUint16(32, 2, true);
+    view.setUint16(34, 16, true);
+
+    writeString(view, 36, 'data');
+    view.setUint32(40, data.length * 2, true);
+
+    floatTo16BitPCM(view, 44, data);
+
+    return new Blob([view], { type: 'audio/wav' });
+}
+
+function floatTo16BitPCM(output, offset, input) {
+    for (let i = 0; i < input.length; i++, offset += 2) {
+        let s = Math.max(-1, Math.min(1, input[i]));
+        output.setInt16(offset, s * 0x7fff, true);
     }
+}
 
-    const audioBlob = new Blob(audioChunks, { type: 'audio/webm;codecs=opus' });
+function writeString(view, offset, string) {
+    for (let i = 0; i < string.length; i++) {
+        view.setUint8(offset + i, string.charCodeAt(i));
+    }
+}
 
-    console.log("音訊大小:", audioBlob.size);
-    console.log("格式:", mediaRecorder.mimeType);
+// ===== Wit + LLM =====
+async function sendToWit(blob) {
 
-    //  下載音檔 debug（很重要）
-    const url = URL.createObjectURL(audioBlob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'debug_audio.webm';
-    a.click();
+    status.innerText = "送到 Wit.ai...";
 
     try {
-        status.innerText = "送到 Wit.ai...";
-
         const res = await fetch("https://api.wit.ai/speech?v=20210928", {
             method: "POST",
             headers: {
                 "Authorization": "Bearer " + WIT_TOKEN,
-                "Content-Type": "audio/webm;codecs=opus"
+                "Content-Type": "audio/wav"
             },
-            body: audioBlob
+            body: blob
         });
 
         const text = await res.text();
-        console.log("Wit raw:", text);
+        console.log("Wit:", text);
 
-        let finalText = "";
-
-        // 🔥 解析多段 JSON
-        const matches = text.match(/\{.*?\}/gs);
-
-        if (matches) {
-            for (let i = matches.length - 1; i >= 0; i--) {
-                try {
-                    const obj = JSON.parse(matches[i]);
-                    if (obj.text && obj.text.trim() !== "") {
-                        finalText = obj.text;
-                        break;
-                    }
-                } catch {}
-            }
-        }
+        const match = text.match(/"text":"(.*?)"/);
+        const finalText = match ? match[1] : "";
 
         if (!finalText) {
-            sttText.innerText = "辨識失敗（可能音訊格式問題）";
-            status.innerText = "Wit 沒聽到內容";
+            sttText.innerText = "❌ 辨識不到";
+            status.innerText = "Wit 沒聽到";
             return;
         }
 
         sttText.innerText = finalText;
-        status.innerText = " 辨識成功";
+        status.innerText = "送到 LLM 分析...";
+
+        // 🔥 傳 JSON（含 questionId）
+        const llmRes = await fetch(LLM_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                question: qid.value,
+                text: finalText
+            })
+        });
+
+        const data = await llmRes.json();
+
+        llmText.innerText = `${data.result} (${data.type || ""})`;
+        status.innerText = "完成 ✅";
 
     } catch (err) {
-        console.error(err);
         status.innerText = "錯誤：" + err.message;
     }
 }
