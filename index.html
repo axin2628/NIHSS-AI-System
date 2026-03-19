@@ -1,167 +1,142 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NIHSS 語音評估系統 v2.2</title>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; text-align: center; padding: 20px; background: #f0f2f5; color: #1c1e21; }
-        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); display: inline-block; max-width: 480px; width: 100%; box-sizing: border-box; }
-        h2 { color: #1877f2; margin-bottom: 25px; }
-        label { display: block; text-align: left; margin-bottom: 10px; font-weight: 600; color: #4b4f56; }
-        select { padding: 12px; font-size: 16px; margin-bottom: 20px; width: 100%; border: 1px solid #dddfe2; border-radius: 6px; background-color: #f5f6f7; }
-        button { padding: 16px; font-size: 18px; cursor: pointer; border: none; border-radius: 6px; width: 100%; font-weight: bold; transition: 0.2s; }
-        .record-off { background-color: #1877f2; color: white; }
-        .record-on { background-color: #fa3e3e; color: white; animation: blink 1.5s infinite; }
-        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
-        #status { margin-top: 15px; color: #8d949e; font-size: 14px; min-height: 20px; }
-        .result-box { margin-top: 30px; text-align: left; border-top: 1px solid #dddfe2; padding-top: 20px; }
-        .res-card { background: #f0f2f5; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 5px solid #1877f2; }
-        .res-label { font-size: 12px; color: #606770; font-weight: bold; text-transform: uppercase; }
-        .res-content { display: block; margin-top: 5px; font-size: 16px; font-weight: 700; color: #1c1e21; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NIHSS STT 測試</title>
 </head>
-<body>
 
-<div class="container">
-    <h2>NIHSS 臨床評估 AI 測試</h2>
-    
-    <label for="questionId">1. 選擇評估題號：</label>
-    <select id="questionId">
-        <option value="1A">1A: 意識程度</option>
-        <option value="1B">1B: 意識提問</option>
-        <option value="1C">1C: 意識指令</option>
-        <option value="2">2: 最佳眼球運動</option>
-        <option value="3">3: 視野</option>
-        <option value="4">4: 面癱</option>
-        <option value="5aL">5aL: 左上肢運動</option>
-        <option value="5bR">5bR: 右上肢運動</option>
-        <option value="6aL">6aL: 左下肢運動</option>
-        <option value="6bR">6bR: 右下肢運動</option>
-        <option value="7">7: 肢體運動失調</option>
-        <option value="8">8: 感覺</option>
-        <option value="9">9: 最佳語言</option>
-        <option value="10">10: 構音障礙</option>
-        <option value="11">11: 忽視症</option>
-    </select>
+<body style="font-family:sans-serif; text-align:center; padding:40px;">
 
-    <button id="btn" class="record-off">開始錄音</button>
-    <div id="status">準備就緒</div>
+<h2>NIHSS 語音測試（修正版）</h2>
 
-    <div class="result-box">
-        <div class="res-card">
-            <span class="res-label">識別內容 (STT)</span>
-            <span id="stt-text" class="res-content">等待辨識...</span>
-        </div>
-        <div class="res-card">
-            <span class="res-label">AI 判讀建議 (LLM)</span>
-            <span id="ai-res" class="res-content">等待評估...</span>
-        </div>
-    </div>
-</div>
+<button id="btn">開始錄音</button>
+<p id="status">準備就緒</p>
+
+<h3>STT 結果：</h3>
+<p id="stt">(尚未辨識)</p>
 
 <script>
-    let mediaRecorder;
-    let audioChunks = [];
-    const btn = document.getElementById('btn');
-    const status = document.getElementById('status');
-    const sttDisplay = document.getElementById('stt-text');
-    const aiDisplay = document.getElementById('ai-res');
-    const qidSelect = document.getElementById('questionId');
+let mediaRecorder;
+let audioChunks = [];
 
-    // --- 設定區 ---
-    const WIT_TOKEN = "2Z3JO2DMTHIIFKXE46XBDAW445LKTBUT"; 
-    const LLM_URL = "http://140.116.32.48:8000/evaluate";
+const btn = document.getElementById("btn");
+const status = document.getElementById("status");
+const sttText = document.getElementById("stt");
 
-    btn.onclick = async () => {
-        if (!mediaRecorder || mediaRecorder.state === 'inactive') {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream);
-                audioChunks = [];
-                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-                mediaRecorder.onstop = processAudio;
-                mediaRecorder.start();
-                btn.innerText = "停止錄音並分析";
-                btn.className = "record-on";
-                status.innerText = "正在錄製臨床評估語音...";
-            } catch (err) {
-                status.innerText = "錯誤：請確認網址為 HTTPS 且已允許麥克風權限";
-            }
-        } else {
-            mediaRecorder.stop();
-            btn.innerText = "開始錄音";
-            btn.className = "record-off";
-            status.innerText = "傳送至 Wit.ai 與 LLM 中...";
+//  你的 token
+const WIT_TOKEN = "2Z3JO2DMTHIIFKXE46XBDAW445LKTBUT";
+
+btn.onclick = async () => {
+
+    // 開始錄音
+    if (!mediaRecorder || mediaRecorder.state === "inactive") {
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+            // 關鍵：指定 opus codec
+            const options = { mimeType: 'audio/webm;codecs=opus' };
+            mediaRecorder = new MediaRecorder(stream, options);
+
+            audioChunks = [];
+
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) {
+                    audioChunks.push(e.data);
+                }
+            };
+
+            mediaRecorder.onstart = () => {
+                console.log("錄音開始");
+            };
+
+            mediaRecorder.onstop = processAudio;
+
+            mediaRecorder.start();
+
+            btn.innerText = "停止錄音";
+            status.innerText = "錄音中...";
+
+        } catch (err) {
+            status.innerText = "麥克風錯誤：" + err.message;
         }
-    };
 
-    async function processAudio() {
-    // 1. 強化音訊封裝
-    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' }); 
-    const cleanToken = WIT_TOKEN.replace(/[^\x00-\x7F]/g, "").trim();
+    } else {
+        // 停止錄音
+        mediaRecorder.stop();
+        btn.innerText = "開始錄音";
+        status.innerText = "處理音訊中...";
+    }
+};
+
+async function processAudio() {
+
+    // 確保不是空音訊
+    if (audioChunks.length === 0) {
+        status.innerText = " 沒有錄到音訊";
+        return;
+    }
+
+    const audioBlob = new Blob(audioChunks, { type: 'audio/webm;codecs=opus' });
+
+    console.log("音訊大小:", audioBlob.size);
+    console.log("格式:", mediaRecorder.mimeType);
+
+    //  下載音檔 debug（很重要）
+    const url = URL.createObjectURL(audioBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'debug_audio.webm';
+    a.click();
 
     try {
-        status.innerText = "正在上傳音訊至 Wit.ai...";
-        
-        // 這裡我們把 Content-Type 改成 audio/webm，讓 Wit.ai 自己去 decode
-        const witRes = await fetch(`https://api.wit.ai/speech`, {
-            method: 'POST',
-            headers: { 
-                'Authorization': `Bearer ${cleanToken}`,
-                'Content-Type': 'audio/webm' 
+        status.innerText = "送到 Wit.ai...";
+
+        const res = await fetch("https://api.wit.ai/speech?v=20210928", {
+            method: "POST",
+            headers: {
+                "Authorization": "Bearer " + WIT_TOKEN,
+                "Content-Type": "audio/webm;codecs=opus"
             },
             body: audioBlob
         });
 
-        const rawResponse = await witRes.text();
-        console.log("Wit.ai 原始回傳內容：", rawResponse);
+        const text = await res.text();
+        console.log("Wit raw:", text);
 
-        // 檢查是否包含 "text" 欄位
-        const jsonMatches = rawResponse.match(/\{.*?\}(?=\s*\{|$)/gs);
-        let finalStt = "";
+        let finalText = "";
 
-        if (jsonMatches) {
-            for (let i = jsonMatches.length - 1; i >= 0; i--) {
+        // 🔥 解析多段 JSON
+        const matches = text.match(/\{.*?\}/gs);
+
+        if (matches) {
+            for (let i = matches.length - 1; i >= 0; i--) {
                 try {
-                    const jsonObj = JSON.parse(jsonMatches[i]);
-                    // 只要 text 不是空的就採用
-                    if (jsonObj.text && jsonObj.text.trim() !== "") {
-                        finalStt = jsonObj.text;
+                    const obj = JSON.parse(matches[i]);
+                    if (obj.text && obj.text.trim() !== "") {
+                        finalText = obj.text;
                         break;
                     }
-                } catch (e) { continue; }
+                } catch {}
             }
         }
 
-        if (!finalStt) {
-            sttDisplay.innerText = "(辨識結果為空)";
-            status.innerText = "Wit.ai 沒聽清楚，請確認網址開頭是 https 並再試一次";
+        if (!finalText) {
+            sttText.innerText = "辨識失敗（可能音訊格式問題）";
+            status.innerText = "Wit 沒聽到內容";
             return;
         }
 
-        sttDisplay.innerText = finalStt;
-        status.innerText = "正在傳送給 NIHSS LLM 判讀...";
-
-        // 2. 傳送給你的 LLM (140.116.32.48)
-        const llmRes = await fetch(LLM_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                question: qidSelect.value,
-                text: finalStt
-            })
-        });
-
-        const llmData = await llmRes.json();
-        aiDisplay.innerText = `${llmData.result} (${llmData.type || 'N/A'})`;
-        status.innerText = "評估完成。";
+        sttText.innerText = finalText;
+        status.innerText = " 辨識成功";
 
     } catch (err) {
-        console.error("Debug Error:", err);
-        status.innerText = "發生錯誤: " + err.message;
+        console.error(err);
+        status.innerText = "錯誤：" + err.message;
     }
 }
 </script>
+
 </body>
 </html>
