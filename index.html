@@ -82,12 +82,18 @@
 
     async function processAudio() {
         const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+    // 關鍵：這行會移除所有隱形的換行符、空格或非英文編碼
+    const cleanToken = WIT_TOKEN.replace(/[^\x00-\x7F]/g, "").trim(); 
 
-        try {
-            const witRes = await fetch(`https://api.wit.ai/speech`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${WIT_TOKEN}`, 'Content-Type': 'audio/wav' },
-                body: audioBlob
+    try {
+        const witRes = await fetch(`https://api.wit.ai/speech`, {
+            method: 'POST',
+            headers: {
+                // 確保這裡只有純英文字串
+                'Authorization': `Bearer ${cleanToken}`, 
+                'Content-Type': 'audio/wav'
+            },
+            body: audioBlob
             });
 
             const rawText = await witRes.text();
