@@ -3,24 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NIHSS 語音評估系統</title>
+    <title>NIHSS 語音評估系統 v2</title>
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 50px; background: #f4f4f9; }
-        .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: inline-block; }
-        button { padding: 15px 30px; font-size: 18px; cursor: pointer; border: none; border-radius: 5px; transition: 0.3s; }
+        body { font-family: sans-serif; text-align: center; padding: 20px; background: #f4f4f9; }
+        .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: inline-block; max-width: 500px; width: 100%; }
+        select { padding: 10px; font-size: 16px; margin-bottom: 20px; width: 100%; border-radius: 5px; }
+        button { padding: 15px 30px; font-size: 18px; cursor: pointer; border: none; border-radius: 5px; width: 100%; }
         .record-off { background-color: #007bff; color: white; }
         .record-on { background-color: #dc3545; color: white; }
-        #status { margin-top: 20px; color: #666; }
-        .result-box { margin-top: 30px; text-align: left; border-top: 1px solid #ddd; padding-top: 20px; }
+        #status { margin-top: 15px; color: #666; font-size: 14px; }
+        .result-box { margin-top: 25px; text-align: left; border-top: 1px solid #ddd; padding-top: 15px; }
         .label { font-weight: bold; color: #333; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>NIHSS 臨床評估 AI 測試</h2>
-    <p>請按下按鈕並說出測試內容（例如：「請張開嘴巴」）</p>
+    <h2>NIHSS 語音 測試</h2>
     
+    <label class="label">1. 選擇評估題號：</label>
+    <select id="questionId">
+        <option value="1A">1A: Level of consciousness</option>
+        <option value="1B">1B: LOC (questions)</option>
+        <option value="1C">1C: LOC (commands)</option>
+        <option value="2">2: Best gaze</option>
+        <option value="3">3: Visual fields</option>
+        <option value="4">4: Facial palsy</option>
+        <option value="5aL">5aL:  Left arm motor drift</option>
+        <option value="5bR">5bR: Right arm motor drift</option>
+        <option value="6aL">6aL: Left leg motor drift</option>
+        <option value="6bR">6bR: Right leg motor drift</option>
+        <option value="7">7: Limb Ataxia</option>
+        <option value="8">8: Sensation</option>
+        <option value="9">9:  Language/aphasia</option>
+        <option value="10">10: Dysarthria</option>
+        <option value="11">11: Extinction/inattention</option>
+    </select>
+
     <button id="btn" class="record-off">開始錄音</button>
     <div id="status">準備就緒</div>
 
@@ -37,9 +56,9 @@
     const status = document.getElementById('status');
     const sttDisplay = document.getElementById('stt-text');
     const aiDisplay = document.getElementById('ai-res');
+    const qidSelect = document.getElementById('questionId');
 
-    // --- 設定區 ---
-    const WIT_TOKEN = "2Z3JO2DMTHIIFKXE46XBDAW445LKTBUT"; // 請替換成你的 Wit.ai Token
+    const WIT_TOKEN = "你的_WIT_AI_TOKEN"; 
     const LLM_URL = "http://140.116.32.48:8000/evaluate";
 
     btn.onclick = async () => {
@@ -47,19 +66,17 @@
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             mediaRecorder = new MediaRecorder(stream);
             audioChunks = [];
-
             mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
             mediaRecorder.onstop = processAudio;
-
             mediaRecorder.start();
-            btn.innerText = "停止並評估";
+            btn.innerText = "停止錄音";
             btn.className = "record-on";
-            status.innerText = "錄音中...";
+            status.innerText = "正在聆聽...";
         } else {
             mediaRecorder.stop();
             btn.innerText = "開始錄音";
             btn.className = "record-off";
-            status.innerText = "處理中，請稍候...";
+            status.innerText = "正在辨識並傳送給 LLM...";
         }
     };
 
@@ -67,35 +84,41 @@
         const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
 
         try {
-            // 1. 傳送到 Wit.ai 轉文字 (STT)
             const witRes = await fetch(`https://api.wit.ai/speech`, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${WIT_TOKEN}`,
-                    'Content-Type': 'audio/wav'
-                },
+                headers: { 'Authorization': `Bearer ${WIT_TOKEN}`, 'Content-Type': 'audio/wav' },
                 body: audioBlob
             });
-            const witData = await witRes.json();
-            const text = witData.text || "未能辨識文字";
-            sttDisplay.innerText = text;
 
-            // 2. 傳送到你的 LLM 伺服器 (Evaluate)
+            const rawText = await witRes.text();
+            // 修正報錯：Wit.ai 有時回傳多行 JSON，我們只取最後一行
+            const jsonLines = rawText.trim().split('\n');
+            const lastJson = JSON.parse(jsonLines[jsonLines.length - 1]);
+            
+            const sttText = lastJson.text || "未能辨識文字";
+            sttDisplay.innerText = sttText;
+
+            // 傳送與 Unity 同格式的 JSON
+            const payload = {
+                question: qidSelect.value,
+                text: sttText
+            };
+
             const llmRes = await fetch(LLM_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ question: "1A", text: text })
+                body: JSON.stringify(payload)
             });
+
             const llmData = await llmRes.json();
-            aiDisplay.innerText = `${llmData.result} (${llmData.type})`;
+            aiDisplay.innerText = `${llmData.result} - ${llmData.reason || ''}`;
             status.innerText = "評估完成！";
 
         } catch (err) {
-            status.innerText = "發生錯誤：" + err.message;
+            status.innerText = "連線失敗，請檢查 VPN 與伺服器";
             console.error(err);
         }
     }
 </script>
-
 </body>
 </html>
