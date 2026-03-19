@@ -65,6 +65,8 @@
     let audioContext;
     let rec;
     let input;
+    let gumStream; // 增加這個變數來追蹤麥克風流
+
     const btn = document.getElementById('btn');
     const status = document.getElementById('status');
 
@@ -74,30 +76,36 @@
 
     btn.onclick = async () => {
         if (!rec || !rec.recording) {
-            // 開始錄音流程
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            input = audioContext.createMediaStreamSource(stream);
-            // 初始化 Recorder
-            rec = new Recorder(input, { numChannels: 1 }); // 單聲道辨識率最高
-            rec.record();
+            try {
+                // 開始錄音
+                gumStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                input = audioContext.createMediaStreamSource(gumStream);
+                
+                rec = new Recorder(input, { numChannels: 1 });
+                rec.record();
 
-            btn.innerText = "停止錄音";
-            btn.className = "record-on";
-            status.innerText = "正在錄製標準 WAV 格式...";
+                btn.innerText = "停止錄音";
+                btn.className = "record-on";
+                status.innerText = "正在錄音 (標準 WAV 格式)...";
+            } catch (e) {
+                status.innerText = "錯誤：無法存取麥克風，請確保為 HTTPS 網址。";
+            }
         } else {
             // 停止錄音
             rec.stop();
+            gumStream.getAudioTracks()[0].stop(); // 關鍵：真正關掉麥克風燈號
+            
             btn.innerText = "開始錄音";
             btn.className = "record-off";
-            status.innerText = "正在處理高品質 WAV 並分析...";
+            status.innerText = "正在處理音訊並傳送至 LLM...";
             
-            // 匯出 WAV 並處理
             rec.exportWAV(processAudio);
         }
     };
 
     async function processAudio(blob) {
+        // 清理 Token，防範編碼錯誤
         const cleanToken = WIT_TOKEN.replace(/[^\x00-\x7F]/g, "").trim();
 
         try {
@@ -111,12 +119,28 @@
             });
 
             const rawText = await witRes.text();
-            const jsonLines = rawText.trim().split('\n');
-            const lastJson = JSON.parse(jsonLines[jsonLines.length - 1]);
-            const sttText = lastJson.text || "辨識失敗";
+            
+            // 使用 Regex 強化解析，避免 SyntaxError
+            const jsonMatches = rawText.match(/\{.*?\}(?=\s*\{|$)/gs);
+            let sttText = "";
+            
+            if (jsonMatches) {
+                for (let i = jsonMatches.length - 1; i >= 0; i--) {
+                    try {
+                        const jsonObj = JSON.parse(jsonMatches[i]);
+                        if (jsonObj.text) { sttText = jsonObj.text; break; }
+                    } catch (e) { continue; }
+                }
+            }
+
+            if (!sttText) {
+                status.innerText = "辨識失敗：沒聽到聲音。";
+                return;
+            }
+
             document.getElementById('stt-text').innerText = sttText;
 
-            // 傳給 LLM
+            // 傳送給 LLM
             const llmRes = await fetch(LLM_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -125,12 +149,16 @@
                     text: sttText
                 })
             });
+
+            if (!llmRes.ok) throw new Error("LLM 伺服器未回應 (請確認 VPN)");
+
             const llmData = await llmRes.json();
-            document.getElementById('ai-res').innerText = `${llmData.result} (${llmData.type})`;
+            document.getElementById('ai-res').innerText = `${llmData.result} (${llmData.type || 'N/A'})`;
             status.innerText = "評估完成！";
 
         } catch (err) {
-            status.innerText = "錯誤: " + err.message;
+            status.innerText = "發生錯誤: " + err.message;
+            console.error(err);
         }
     }
 </script>
