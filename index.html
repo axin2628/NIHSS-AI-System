@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NIHSS 語音評估系統 v3.2</title>
-    <script src="https://cdn.jsdelivr.net/gh/mattdiamond/Recorderjs@master/dist/recorder.js"></script>
+    <title>NIHSS 語音評估系統 v3.3</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; text-align: center; padding: 20px; background: #f0f2f5; color: #1c1e21; }
         .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); display: inline-block; max-width: 480px; width: 100%; box-sizing: border-box; }
@@ -46,8 +45,8 @@
         <option value="11">11: 忽視症</option>
     </select>
 
-    <button id="btn" class="record-off">載入系統中...</button>
-    <div id="status">檢查外掛組件...</div>
+    <button id="btn" class="record-off">開始錄音</button>
+    <div id="status">系統已就緒</div>
 
     <div class="result-box">
         <div class="res-card">
@@ -62,9 +61,14 @@
 </div>
 
 <script>
+    // --- 內建 Recorder.js 核心程式碼 ---
+    (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.Recorder=f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){"use strict";Object.defineProperty(exports,"__esModule",{value:true});var _createClass=function(){function defineProperties(target,props){for(var i=0;i<props.length;i++){var descriptor=props[i];descriptor.enumerable=descriptor.enumerable||false;descriptor.configurable=true;if("value"in descriptor)descriptor.writable=true;Object.defineProperty(target,descriptor.key,descriptor)}}return function(Constructor,protoProps,staticProps){if(protoProps)defineProperties(Constructor.prototype,protoProps);if(staticProps)defineProperties(Constructor,staticProps);return Constructor}}();function _classCallCheck(instance,Constructor){if(!(instance instanceof Constructor)){throw new TypeError("Cannot call a class as a function")}}var Recorder=function(){function Recorder(source,cfg){var _this=this;_classCallCheck(this,Recorder);var config=cfg||{};var bufferLen=config.bufferLen||4096;var numChannels=config.numChannels||2;this.context=source.context;this.node=(this.context.createScriptProcessor||this.context.createJavaScriptNode).call(this.context,bufferLen,numChannels,numChannels);var worker=new Worker(config.workerPath||Recorder.forceDownload(Recorder.workerCode));worker.postMessage({command:'init',config:{sampleRate:this.context.sampleRate,numChannels:numChannels}});var recording=false,currCallback;this.node.onaudioprocess=function(e){if(!recording)return;var buffer=[];for(var channel=0;channel<numChannels;channel++){buffer.push(e.inputBuffer.getChannelData(channel))}worker.postMessage({command:'record',buffer:buffer})};this.exportWAV=function(cb,type){currCallback=cb;type=type||config.type||'audio/wav';if(!currCallback)throw new Error('Callback not set');worker.postMessage({command:'exportWAV',type:type})};worker.onmessage=function(e){var blob=e.data;currCallback(blob)};this.record=function(){recording=true};this.stop=function(){recording=false};this.clear=function(){worker.postMessage({command:'clear'})};this.getBuffer=function(cb){currCallback=cb;worker.postMessage({command:'getBuffer'})};this.node.connect(this.context.destination);source.connect(this.node)}Recorder.forceDownload=function(code){var blob=new Blob([code],{type:"text/javascript"});return URL.createObjectURL(blob)};Recorder.workerCode='var recLength = 0, recBuffers = [], sampleRate, numChannels; self.onmessage = function(e){ switch(e.data.command){ case "init": init(e.data.config); break; case "record": record(e.data.buffer); break; case "exportWAV": exportWAV(e.data.type); break; case "clear": clear(); break; } }; function init(config){ sampleRate = config.sampleRate; numChannels = config.numChannels; clear(); } function record(inputBuffer){ for (var channel = 0; channel < numChannels; channel++){ recBuffers[channel].push(inputBuffer[channel]); } recLength += inputBuffer[0].length; } function exportWAV(type){ var buffers = []; for (var channel = 0; channel < numChannels; channel++){ buffers.push(mergeBuffers(recBuffers[channel], recLength)); } var interleaved; if (numChannels === 2){ interleaved = interleave(buffers[0], buffers[1]); } else { interleaved = buffers[0]; } var dataview = encodeWAV(interleaved); var audioBlob = new Blob([dataview], { type: type }); self.postMessage(audioBlob); } function clear(){ recLength = 0; recBuffers = []; for (var channel = 0; channel < numChannels; channel++){ recBuffers[channel] = []; } } function mergeBuffers(recBuffers, recLength){ var result = new Float32Array(recLength); var offset = 0; for (var i = 0; i < recBuffers.length; i++){ result.set(recBuffers[i], offset); offset += recBuffers[i].length; } return result; } function interleave(inputL, inputR){ var length = inputL.length + inputR.length; var result = new Float32Array(length); var index = 0, inputIndex = 0; while (index < length){ result[index++] = inputL[inputIndex]; result[index++] = inputR[inputIndex]; inputIndex++; } return result; } function writeString(view, offset, string){ for (var i = 0; i < string.length; i++){ view.setUint8(offset + i, string.charCodeAt(i)); } } function encodeWAV(samples){ var buffer = new ArrayBuffer(44 + samples.length * 2); var view = new DataView(buffer); writeString(view, 0, "RIFF"); view.setUint32(4, 36 + samples.length * 2, true); writeString(view, 8, "WAVE"); writeString(view, 12, "fmt "); view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, numChannels, true); view.setUint32(24, sampleRate, true); view.setUint32(28, sampleRate * numChannels * 2, true); view.setUint16(32, numChannels * 2, true); view.setUint16(34, 16, true); writeString(view, 36, "data"); view.setUint32(40, samples.length * 2, true); floatTo16BitPCM(view, 44, samples); return view; } function floatTo16BitPCM(output, offset, input){ for (var i = 0; i < input.length; i++, offset += 2){ var s = Math.max(-1, Math.min(1, input[i])); output.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true); } }';return Recorder},{}]},{},[1])(1)});
+</script>
+
+<script>
+    // --- 業務邏輯 ---
     let audioContext;
     let rec;
-    let input;
     let gumStream;
 
     const btn = document.getElementById('btn');
@@ -75,36 +79,20 @@
     const WIT_TOKEN = "2Z3JO2DMTHIIFKXE46XBDAW445LKTBUT"; 
     const LLM_URL = "http://140.116.32.48:8000/evaluate";
 
-    // --- 檢查外掛是否載入成功 ---
-    window.onload = function() {
-        if (typeof Recorder !== "undefined") {
-            btn.innerText = "開始錄音";
-            status.innerText = "系統就緒";
-        } else {
-            status.innerText = "錯誤：無法載入錄音組件，請檢查網路。";
-            btn.disabled = true;
-        }
-    };
-
     btn.onclick = async function() {
-        if (typeof Recorder === "undefined") {
-            alert("錄音組件尚未載入，請重新整理頁面。");
-            return;
-        }
-
         if (!rec || !rec.recording) {
             try {
                 gumStream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
-                input = audioContext.createMediaStreamSource(gumStream);
+                let input = audioContext.createMediaStreamSource(gumStream);
                 
-                // 這裡就是報錯點，我們確保它已經載入
+                // 這次 Recorder 就在上面程式碼裡，絕對不會找不到
                 rec = new Recorder(input, { numChannels: 1 });
                 rec.record();
 
                 btn.innerText = "停止錄音並分析";
                 btn.className = "record-on";
-                status.innerText = "正在錄音 (標準 16kHz WAV)...";
+                status.innerText = "錄音中 (16kHz WAV)...";
             } catch (err) {
                 status.innerText = "無法開啟麥克風: " + err.message;
             }
@@ -113,7 +101,7 @@
             gumStream.getAudioTracks()[0].stop();
             btn.innerText = "開始錄音";
             btn.className = "record-off";
-            status.innerText = "正在處理音訊...";
+            status.innerText = "處理音訊中...";
             rec.exportWAV(processAudio);
         }
     };
@@ -146,12 +134,12 @@
             }
 
             if (!finalStt) {
-                status.innerText = "未能辨識文字，請再試一次。";
+                status.innerText = "辨識失敗，請再試一次。";
                 return;
             }
 
             sttDisplay.innerText = finalStt;
-            status.innerText = "正在傳送至 LLM...";
+            status.innerText = "連線至成大 LLM...";
 
             const llmRes = await fetch(LLM_URL, {
                 method: 'POST',
