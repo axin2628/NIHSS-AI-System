@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NIHSS 臨床評估 AI 系統</title>
+    <title>NIHSS 臨床評估 AI 系統 (原生辨識版)</title>
     <style>
         body { font-family: -apple-system, sans-serif; background: #f0f2f5; padding: 20px; display: flex; justify-content: center; }
-        .container { background: white; padding: 30px; border-radius: 12px; shadow: 0 8px 24px rgba(0,0,0,0.1); max-width: 900px; width: 100%; }
+        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); max-width: 900px; width: 100%; }
         h2 { color: #1877f2; text-align: center; }
         
         .setup-section { margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; }
@@ -19,12 +19,10 @@
         .panel { padding: 20px; border: 1px solid #eee; border-radius: 10px; display: flex; flex-direction: column; }
         .panel h3 { margin-top: 0; font-size: 16px; color: #4b4f56; border-bottom: 2px solid #1877f2; padding-bottom: 5px; }
 
-        /* 錄音按鈕樣式 */
         button { padding: 15px; font-size: 16px; cursor: pointer; border: none; border-radius: 6px; font-weight: bold; transition: 0.3s; margin-top: 10px; }
         .btn-audio-off { background: #1877f2; color: white; }
         .btn-audio-on { background: #fa3e3e; color: white; animation: blink 1.5s infinite; }
         .btn-send { background: #42b72a; color: white; }
-        .btn-send:hover { background: #36a420; }
 
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
 
@@ -55,9 +53,9 @@
 
     <div class="main-grid">
         <div class="panel">
-            <h3>方案 A：語音輸入 (Wit.ai)</h3>
-            <p style="font-size: 12px; color: #999;">點擊按鈕說話，系統會自動轉文字並判讀。</p>
-            <button id="audioBtn" class="btn-audio-off">開始錄音</button>
+            <h3>方案 A：瀏覽器語音辨識</h3>
+            <p style="font-size: 12px; color: #999;">使用 Chrome 內建辨識（免外掛）。</p>
+            <button id="audioBtn" class="btn-audio-off">開始說話</button>
         </div>
 
         <div class="panel">
@@ -70,18 +68,58 @@
     <div id="status">準備就緒</div>
 
     <div class="result-area">
-        <span class="res-label">最後辨識/輸入內容：</span>
+        <span class="res-label">識別內容：</span>
         <span id="stt-text" class="res-content">無資料</span>
         <hr style="border: 0; border-top: 1px solid #c9d9e9; margin: 10px 0;">
-        <span class="res-label">AI 評估結果 (來自 140.116)：</span>
+        <span class="res-label">AI 評估結果：</span>
         <span id="ai-res" class="res-content">等待資料...</span>
     </div>
 </div>
 
 <script>
-    let mediaRecorder;
-    let audioChunks = [];
-    let gumStream;
+    // 初始化語音辨識物件
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition;
+    let isListening = false;
+
+    if (SpeechRecognition) {
+        recognition = new SpeechRecognition();
+        recognition.lang = 'zh-TW'; // 設定為台灣繁體中文
+        recognition.continuous = false; // 講完一句自動停止
+        recognition.interimResults = false; // 只取最後結果
+
+        recognition.onstart = () => {
+            isListening = true;
+            audioBtn.innerText = "正在聆聽...";
+            audioBtn.className = "btn-audio-on";
+            status.innerText = "請開始說話...";
+        };
+
+        recognition.onresult = (event) => {
+            const text = event.results[0][0].transcript;
+            sttDisplay.innerText = text;
+            status.innerText = "辨識完成，傳送至 LLM...";
+            callLLM(text);
+        };
+
+        recognition.onerror = (event) => {
+            status.innerText = "辨識出錯: " + event.error;
+            stopUI();
+        };
+
+        recognition.onend = () => {
+            stopUI();
+        };
+    } else {
+        status.innerText = "抱歉，您的瀏覽器不支援原生語音辨識，請使用 Chrome。";
+        audioBtn.disabled = true;
+    }
+
+    function stopUI() {
+        isListening = false;
+        audioBtn.innerText = "開始說話";
+        audioBtn.className = "btn-audio-off";
+    }
 
     const audioBtn = document.getElementById('audioBtn');
     const sendBtn = document.getElementById('sendBtn');
@@ -91,69 +129,26 @@
     const aiDisplay = document.getElementById('ai-res');
     const qidSelect = document.getElementById('questionId');
 
-    const WIT_TOKEN = "2Z3JO2DMTHIIFKXE46XBDAW445LKTBUT"; 
     const LLM_URL = "http://140.116.32.48:8000/evaluate";
 
-    // --- 邏輯 A：錄音功能 ---
-    audioBtn.onclick = async () => {
-        if (!mediaRecorder || mediaRecorder.state === "inactive") {
-            try {
-                gumStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(gumStream);
-                audioChunks = [];
-                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-                mediaRecorder.onstop = processAudio;
-                mediaRecorder.start();
-                audioBtn.innerText = "停止錄音";
-                audioBtn.className = "btn-audio-on";
-                status.innerText = "正在錄音...";
-            } catch (err) {
-                status.innerText = "無法開啟麥克風，請檢查權限。";
-            }
+    // --- 錄音按鈕邏輯 ---
+    audioBtn.onclick = () => {
+        if (!isListening) {
+            recognition.start();
         } else {
-            mediaRecorder.stop();
-            gumStream.getAudioTracks().forEach(t => t.stop());
-            audioBtn.innerText = "開始錄音";
-            audioBtn.className = "btn-audio-off";
-            status.innerText = "語音傳送中...";
+            recognition.stop();
         }
     };
 
-    async function processAudio() {
-        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-        try {
-            const witRes = await fetch(`https://api.wit.ai/speech`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${WIT_TOKEN}`, 'Content-Type': 'audio/webm' },
-                body: audioBlob
-            });
-            const raw = await witRes.text();
-            const matches = raw.match(/\{.*?\}(?=\s*\{|$)/gs);
-            let text = "";
-            if (matches) {
-                for (let i = matches.length - 1; i >= 0; i--) {
-                    const jsonObj = JSON.parse(matches[i]);
-                    if (jsonObj.text) { text = jsonObj.text; break; }
-                }
-            }
-            if (!text) { status.innerText = "語音辨識失敗，請改用手動輸入。"; return; }
-            sttDisplay.innerText = text;
-            callLLM(text);
-        } catch (err) {
-            status.innerText = "STT 發生錯誤: " + err.message;
-        }
-    }
-
-    // --- 邏輯 B：手動輸入功能 ---
+    // --- 手動輸入邏輯 ---
     sendBtn.onclick = () => {
         const text = manualInput.value.trim();
         if (!text) { alert("請先輸入內容！"); return; }
         sttDisplay.innerText = text;
-        status.innerText = "手動資料傳送至成大 LLM...";
         callLLM(text);
     };
 
-    // --- 核心：連線至成大 LLM ---
+    // --- 核心連線邏輯 ---
     async function callLLM(text) {
         try {
             const res = await fetch(LLM_URL, {
@@ -161,13 +156,12 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ question: qidSelect.value, text: text })
             });
-            if (!res.ok) throw new Error("LLM 伺服器未回應 (可能是 VPN/CORS 問題)");
             const data = await res.json();
             aiDisplay.innerText = `${data.result} (${data.type || 'N/A'})`;
             status.innerText = "判讀完成！";
         } catch (err) {
             aiDisplay.innerText = "連線失敗";
-            status.innerText = "錯誤: " + err.message;
+            status.innerText = "錯誤: " + err.message + " (請檢查 VPN 與 CORS 權限)";
         }
     }
 </script>
