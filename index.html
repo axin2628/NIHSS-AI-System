@@ -3,176 +3,329 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NIHSS 臨床評估 AI 系統 (原生辨識版)</title>
+    <title>NIHSS LLM 語音輸入測試</title>
     <style>
-        body { font-family: -apple-system, sans-serif; background: #f0f2f5; padding: 20px; display: flex; justify-content: center; }
-        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); max-width: 900px; width: 100%; }
-        h2 { color: #1877f2; text-align: center; }
-        
-        .setup-section { margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; }
-        label { font-weight: bold; display: block; margin-bottom: 5px; }
-        select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ddd; font-size: 16px; }
+        :root {
+            --primary-blue: #1b78f2;
+            --primary-green: #42b72a;
+            --bg-gray: #f8f9fa;
+            --text-gray: #4e4e4e;
+            --border-color: #e7e7e7;
+            --placeholder-color: #9c9c9c;
+        }
 
-        .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
-        @media (max-width: 600px) { .main-grid { grid-template-columns: 1fr; } }
+        body {
+            font-family: 'Noto Sans', 'Segoe UI', sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
+            color: var(--text-gray);
+        }
 
-        .panel { padding: 20px; border: 1px solid #eee; border-radius: 10px; display: flex; flex-direction: column; }
-        .panel h3 { margin-top: 0; font-size: 16px; color: #4b4f56; border-bottom: 2px solid #1877f2; padding-bottom: 5px; }
+        .main-card {
+            background: white;
+            width: 100%;
+            max-width: 800px;
+            border-radius: 14px;
+            box-shadow: 0px 4px 12px rgba(0,0,0,0.1);
+            padding: 40px;
+        }
 
-        button { padding: 15px; font-size: 16px; cursor: pointer; border: none; border-radius: 6px; font-weight: bold; transition: 0.3s; margin-top: 10px; }
-        .btn-audio-off { background: #1877f2; color: white; }
-        .btn-audio-on { background: #fa3e3e; color: white; animation: blink 1.5s infinite; }
-        .btn-send { background: #42b72a; color: white; }
+        h1 {
+            color: var(--primary-blue);
+            font-size: 32px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
 
-        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        /* 第一區塊：題號選擇 */
+        .section-header {
+            background: var(--bg-gray);
+            border-radius: 20px;
+            padding: 25px;
+            text-align: center;
+            margin-bottom: 25px;
+        }
 
-        textarea { width: 100%; height: 80px; padding: 10px; border-radius: 6px; border: 1px solid #ddd; resize: none; box-sizing: border-box; font-size: 16px; }
-        
-        #status { margin-top: 15px; font-size: 13px; color: #8d949e; text-align: center; min-height: 1.5em; }
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
 
-        .result-area { margin-top: 25px; background: #e7f3ff; padding: 15px; border-radius: 8px; border-left: 5px solid #1877f2; }
-        .res-label { font-size: 12px; color: #606770; font-weight: bold; }
-        .res-content { display: block; font-size: 18px; font-weight: bold; color: #1c1e21; margin-top: 5px; }
+        .selector-group {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .nav-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            background: #f1f1f1;
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        select {
+            flex: 1;
+            max-width: 400px;
+            padding: 10px 15px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            font-size: 16px;
+            appearance: none;
+            background: white url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat right 15px center;
+            background-size: 15px;
+        }
+
+        /* 第二區塊：輸入模式切換 */
+        .tab-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .tab {
+            padding: 12px;
+            border-radius: 15px;
+            border: none;
+            font-weight: 700;
+            cursor: pointer;
+            background: #f5f5f5;
+            color: var(--text-gray);
+            transition: 0.3s;
+        }
+
+        .tab.active-blue { background: var(--primary-blue); color: white; }
+        .tab.active-green { background: var(--primary-green); color: white; }
+
+        .input-panel {
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 20px;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        textarea {
+            width: 100%;
+            border: none;
+            font-size: 16px;
+            resize: none;
+            outline: none;
+            color: var(--text-gray);
+            min-height: 100px;
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 12px;
+            border-radius: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: 0.3s;
+            background: white;
+        }
+
+        .btn-blue { border: 1px solid var(--primary-blue); color: var(--primary-blue); }
+        .btn-blue.recording { background: #fff1f1; color: #fa3e3e; border-color: #fa3e3e; animation: pulse 1.5s infinite; }
+        .btn-green { border: 1px solid var(--primary-green); color: var(--primary-green); }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+
+        /* 第三區塊：辨識結果總覽 */
+        .result-section {
+            margin-top: 40px;
+            background: var(--bg-gray);
+            border-radius: 20px;
+            padding: 25px;
+        }
+
+        table {
+            width: 100%;
+            background: white;
+            border-collapse: collapse;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        th {
+            background: white;
+            text-align: left;
+            padding: 12px 15px;
+            font-size: 14px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 12px 15px;
+            font-size: 14px;
+            border-bottom: 1px solid var(--border-color);
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>NIHSS 臨床評估 AI 系統</h2>
+<div class="main-card">
+    <h1>NIHSS LLM語音輸入測試</h1>
 
-    <div class="setup-section">
-        <label>1. 當前評估題號：</label>
-        <select id="questionId">
-            <option value="1A">1A:  Level of consciousness</option>
-            <option value="1B">1B:  LOC (questions)</option>
-            <option value="1C">1C: LOC (commands)</option>
-            <option value="2">2: Best gaze</option>
-            <option value="3">3: Visual fields</option>
-            <option value="4">4: Facial palsy</option>
-            <option value="5aL">5aL:  Left arm motor drift</option>
-            <option value="5bR">5bR: Right arm motor drift</option>
-            <option value="6aL">6aL: Left leg motor drift</option>
-            <option value="6bR">6bR: Right leg motor drift</option>
-            <option value="7">7: Limb Ataxia</option>
-            <option value="8">8: Sensation</option>
-            <option value="9">9: Language/aphasia</option>
-            <option value="10">10: Dysarthria</option>
-            <option value="11">11: Extinction/inattention</option>
-        </select>
-    </div>
-
-    <div class="main-grid">
-        <div class="panel">
-            <h3>方案 A：瀏覽器語音辨識</h3>
-            <p style="font-size: 12px; color: #999;">使用 Chrome 內建辨識（免外掛）。</p>
-            <button id="audioBtn" class="btn-audio-off">開始說話</button>
-        </div>
-
-        <div class="panel">
-            <h3>方案 B：手動輸入 (備用)</h3>
-            <textarea id="manualInput" placeholder="請在此輸入受測者說的話..."></textarea>
-            <button id="sendBtn" class="btn-send">發送至 LLM 判讀</button>
+    <div class="section-header">
+        <div class="section-title">當前評估題號</div>
+        <div class="selector-group">
+            <button class="nav-btn" onclick="changeQuestion(-1)"> &lt; </button>
+            <select id="questionId">
+                <option value="1A">1A:  Level of consciousness</option>
+                <option value="1B">1B:  LOC (questions)</option>
+                <option value="1C">1C: LOC (commands)</option>
+                <option value="2">2: Best gaze</option>
+                <option value="3">3: Visual fields</option>
+                <option value="4">4: Facial palsy</option>
+                <option value="5aL">5aL:  Left arm motor drift</option>
+                <option value="5bR">5bR: Right arm motor drift</option>
+                <option value="6aL">6aL: Left leg motor drift</option>
+                <option value="6bR">6bR: Right leg motor drift</option>
+                <option value="7">7: Limb Ataxia</option>
+                <option value="8">8: Sensation</option>
+                <option value="9">9: Language/aphasia</option>
+                <option value="10">10: Dysarthria</option>
+                <option value="11">11: Extinction/inattention</option>
+            </select>
+            <button class="nav-btn" onclick="changeQuestion(1)"> &gt; </button>
         </div>
     </div>
 
-    <div id="status">準備就緒</div>
+    <div class="tab-group">
+        <button id="tabAudio" class="tab active-blue" onclick="switchMode('audio')">語音輸入</button>
+        <button id="tabManual" class="tab" onclick="switchMode('manual')">鍵盤輸入</button>
+    </div>
 
-    <div class="result-area">
-        <span class="res-label">識別內容：</span>
-        <span id="stt-text" class="res-content">無資料</span>
-        <hr style="border: 0; border-top: 1px solid #c9d9e9; margin: 10px 0;">
-        <span class="res-label">AI 評估結果：</span>
-        <span id="ai-res" class="res-content">等待資料...</span>
+    <div class="input-panel">
+        <textarea id="inputText" placeholder="此區域顯示輸入的文字..."></textarea>
+        
+        <button id="actionBtn" class="action-btn btn-blue" onclick="handleAction()">開始說話</button>
+    </div>
+
+    <div class="result-section">
+        <div class="section-title">辨識結果總覽</div>
+        <table id="resultTable">
+            <thead>
+                <tr>
+                    <th width="15%">題號</th>
+                    <th width="55%">傳送內容</th>
+                    <th width="30%">辨識結果</th>
+                </tr>
+            </thead>
+            <tbody>
+                </tbody>
+        </table>
     </div>
 </div>
 
 <script>
-    // 初始化語音辨識物件
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    let recognition;
-    let isListening = false;
-
-    if (SpeechRecognition) {
-        recognition = new SpeechRecognition();
-        recognition.lang = 'zh-TW'; // 設定為台灣繁體中文
-        recognition.continuous = false; // 講完一句自動停止
-        recognition.interimResults = false; // 只取最後結果
-
-        recognition.onstart = () => {
-            isListening = true;
-            audioBtn.innerText = "正在聆聽...";
-            audioBtn.className = "btn-audio-on";
-            status.innerText = "請開始說話...";
-        };
-
-        recognition.onresult = (event) => {
-            const text = event.results[0][0].transcript;
-            sttDisplay.innerText = text;
-            status.innerText = "辨識完成，傳送至 LLM...";
-            callLLM(text);
-        };
-
-        recognition.onerror = (event) => {
-            status.innerText = "辨識出錯: " + event.error;
-            stopUI();
-        };
-
-        recognition.onend = () => {
-            stopUI();
-        };
-    } else {
-        status.innerText = "抱歉，您的瀏覽器不支援原生語音辨識，請使用 Chrome。";
-        audioBtn.disabled = true;
-    }
-
-    function stopUI() {
-        isListening = false;
-        audioBtn.innerText = "開始說話";
-        audioBtn.className = "btn-audio-off";
-    }
-
-    const audioBtn = document.getElementById('audioBtn');
-    const sendBtn = document.getElementById('sendBtn');
-    const manualInput = document.getElementById('manualInput');
-    const status = document.getElementById('status');
-    const sttDisplay = document.getElementById('stt-text');
-    const aiDisplay = document.getElementById('ai-res');
-    const qidSelect = document.getElementById('questionId');
-
+    let mode = 'audio';
+    let isRecording = false;
     const LLM_URL = "http://140.116.32.48:8000/evaluate";
 
-    // --- 錄音按鈕邏輯 ---
-    audioBtn.onclick = () => {
-        if (!isListening) {
-            recognition.start();
-        } else {
-            recognition.stop();
-        }
-    };
+    // 1. 切換 語音/鍵盤 模式
+    function switchMode(m) {
+        mode = m;
+        const audioBtn = document.getElementById('tabAudio');
+        const manualBtn = document.getElementById('tabManual');
+        const actionBtn = document.getElementById('actionBtn');
+        const inputText = document.getElementById('inputText');
 
-    // --- 手動輸入邏輯 ---
-    sendBtn.onclick = () => {
-        const text = manualInput.value.trim();
-        if (!text) { alert("請先輸入內容！"); return; }
-        sttDisplay.innerText = text;
+        if (m === 'audio') {
+            audioBtn.className = 'tab active-blue';
+            manualBtn.className = 'tab';
+            actionBtn.className = 'action-btn btn-blue';
+            actionBtn.innerText = '開始說話';
+            inputText.placeholder = '此區域顯示語音輸入的文字...';
+        } else {
+            audioBtn.className = 'tab';
+            manualBtn.className = 'tab active-green';
+            actionBtn.className = 'action-btn btn-green';
+            actionBtn.innerText = '送出辨識';
+            inputText.placeholder = '請使用鍵盤輸入文字...';
+        }
+    }
+
+    // 2. 題號左右切換邏輯
+    function changeQuestion(dir) {
+        const select = document.getElementById('questionId');
+        let newIndex = select.selectedIndex + dir;
+        if (newIndex >= 0 && newIndex < select.options.length) {
+            select.selectedIndex = newIndex;
+        }
+    }
+
+    // 3. 語音辨識邏輯 (Web Speech API)
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = 'zh-TW';
+
+    recognition.onresult = (event) => {
+        const text = event.results[0][0].transcript;
+        document.getElementById('inputText').value = text;
         callLLM(text);
     };
 
-    // --- 核心連線邏輯 ---
+    recognition.onend = () => {
+        isRecording = false;
+        document.getElementById('actionBtn').innerText = '開始說話';
+        document.getElementById('actionBtn').classList.remove('recording');
+    };
+
+    // 4. 按鈕行為控管
+    function handleAction() {
+        const textInput = document.getElementById('inputText').value;
+        if (mode === 'audio') {
+            if (!isRecording) {
+                isRecording = true;
+                document.getElementById('actionBtn').innerText = '正在聆聽... (點擊停止)';
+                document.getElementById('actionBtn').classList.add('recording');
+                recognition.start();
+            } else {
+                recognition.stop();
+            }
+        } else {
+            if (!textInput.trim()) return alert("請輸入內容");
+            callLLM(textInput);
+        }
+    }
+
+    // 5. 串接 LLM 並更新表格
     async function callLLM(text) {
+        const qid = document.getElementById('questionId').value;
         try {
             const res = await fetch(LLM_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ question: qidSelect.value, text: text })
+                body: JSON.stringify({ question: qid, text: text })
             });
             const data = await res.json();
-            aiDisplay.innerText = `${data.result} (${data.type || 'N/A'})`;
-            status.innerText = "判讀完成！";
+            updateTable(qid, text, `${data.result} (${data.type})`);
         } catch (err) {
-            aiDisplay.innerText = "連線失敗";
-            status.innerText = "錯誤: " + err.message + " (請檢查 VPN 與 CORS 權限)";
+            updateTable(qid, text, "連線失敗");
         }
+    }
+
+    function updateTable(qid, content, res) {
+        const table = document.getElementById('resultTable').getElementsByTagName('tbody')[0];
+        const newRow = table.insertRow(0); // 新的放最上面
+        newRow.innerHTML = `<td>${qid}</td><td>${content}</td><td>${res}</td>`;
     }
 </script>
 </body>
