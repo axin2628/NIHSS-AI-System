@@ -35,6 +35,31 @@
 
         h1 { color: var(--primary-blue); font-size: 32px; text-align: center; margin-bottom: 30px; }
 
+        /* 醫師資訊 bar */
+        .doctor-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f0f5ff;
+            border: 1px solid #d0e0ff;
+            border-radius: 12px;
+            padding: 10px 18px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #333;
+        }
+        .doctor-bar span { font-weight: 600; color: var(--primary-blue); }
+        .doctor-bar button {
+            background: none;
+            border: 1px solid #aac4ff;
+            border-radius: 8px;
+            padding: 4px 12px;
+            font-size: 13px;
+            color: var(--primary-blue);
+            cursor: pointer;
+        }
+        .doctor-bar button:hover { background: #e0ecff; }
+
         /* 題號選擇區塊 */
         .section-header {
             background: var(--bg-gray);
@@ -50,7 +75,6 @@
         .nav-btn:disabled { background: white; color: var(--disabled-text); border: 1px solid var(--border-color); cursor: not-allowed; }
         select { flex: 1; max-width: 400px; padding: 10px 15px; border-radius: 10px; border: 1px solid var(--border-color); font-size: 16px; }
 
-        /* 新增：勾選醫師預期答案的容器 */
         .expected-check-container { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 16px; color: #666; }
         .expected-check-container input { cursor: pointer; }
 
@@ -72,28 +96,44 @@
 
         /* 彈出視窗 (Modal) */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: none; justify-content: center; align-items: center; z-index: 1000; }
-        .modal-card { background: white; width: 90%; max-width: 500px; padding: 42px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; position: relative; /* 必加：讓 X 按鈕可以相對於卡片定位 */}
+        .modal-card { background: white; width: 90%; max-width: 500px; padding: 42px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; position: relative; }
         .modal-qid { background: #f8f9fa; padding: 10px; border-radius: 10px; margin-bottom: 15px; font-weight: bold; border: 1px solid #eee; }
         .modal-text { font-style: normal; color: #555; margin-bottom: 25px; line-height: 1.2; }
         .modal-options { display: flex; justify-content: center; gap: 30px; margin-bottom: 15px;}
         .modal-option { display: flex; align-items: center; gap: 12px; cursor: pointer; font-weight: bold; font-size: 16px; }
         .modal-option input { width: 18px; height: 18px; }
-        /* X 按鈕的樣式 */
-        .modal-close-x 
-        {
-            position: absolute; /* */
-            top: 15px;          /* 距離頂部距離 */
-            right: 20px;        /* 距離右側距離 */
-            font-size: 25px;    /* X 的大小 */
-            color: #ccc;        /* 預設灰色 */
-            cursor: pointer;    /* 滑鼠移上去變手指 */
-            line-height: 1;     /* */
-            transition: 0.2s;   /* */
-        }
+        .modal-close-x { position: absolute; top: 15px; right: 20px; font-size: 25px; color: #ccc; cursor: pointer; line-height: 1; transition: 0.2s; }
+        .modal-close-x:hover { color: #E1575A; }
 
-        .modal-close-x:hover {
-            color: #E1575A;     /* 滑鼠移上去變紅色 */
+        /* 註冊 Modal */
+        .register-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 2000;
         }
+        .register-card {
+            background: white; padding: 44px 40px; border-radius: 24px;
+            width: 90%; max-width: 420px; text-align: center;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.18);
+        }
+        .register-card h2 { color: var(--primary-blue); font-size: 22px; margin-bottom: 6px; }
+        .register-card p { color: #888; font-size: 14px; margin-bottom: 24px; }
+        .register-input {
+            width: 100%; padding: 11px 15px; margin: 7px 0;
+            border: 1px solid var(--border-color); border-radius: 12px;
+            font-size: 16px; box-sizing: border-box; outline: none;
+            transition: border 0.2s;
+        }
+        .register-input:focus { border-color: var(--primary-blue); }
+        .register-btn {
+            width: 100%; padding: 13px; margin-top: 16px;
+            border-radius: 14px; border: none;
+            background: var(--primary-blue); color: white;
+            font-size: 16px; font-weight: 700; cursor: pointer;
+            transition: 0.2s;
+        }
+        .register-btn:hover { background: #1560c8; }
 
         /* 結果表格 */
         .result-section { margin-top: 40px; background: var(--bg-gray); border-radius: 20px; padding: 25px; }
@@ -102,7 +142,7 @@
         .filter-btn.active[data-type="all"] { background: #e0e0e0; }
         .filter-btn.active[data-type="success"] { background: #42B72A; color: white; }
         .filter-btn.active[data-type="fail"] { background: #E1575A; color: white; }
-        
+
         table { width: 100%; background: white; border-collapse: collapse; border-radius: 10px; overflow: hidden; border: 1px solid var(--border-color); }
         th, td { padding: 12px 15px; font-size: 14px; text-align: left; border-bottom: 1px solid var(--border-color); }
         .status-loading { color: #888; }
@@ -114,7 +154,22 @@
 </head>
 <body>
 
-<!-- 彈出視窗：醫師預期答案勾選 -->
+<!-- ═══════════════════════════════════════════════
+     註冊 Modal（第一次使用才會出現）
+════════════════════════════════════════════════ -->
+<div id="registerOverlay" class="register-overlay">
+    <div class="register-card">
+        <h2>醫師資料登錄</h2>
+        <p>第一次使用請填寫以下資料，之後會自動記住</p>
+        <input id="regName"     class="register-input" placeholder="姓名" />
+        <input id="regDept"     class="register-input" placeholder="科別" />
+        <button class="register-btn" onclick="saveDoctor()">開始使用</button>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     預期答案 Modal
+════════════════════════════════════════════════ -->
 <div id="modalOverlay" class="modal-overlay">
     <div class="modal-card">
         <span class="modal-close-x" onclick="closeModal()">&times;</span>
@@ -132,8 +187,17 @@
     </div>
 </div>
 
+<!-- ═══════════════════════════════════════════════
+     主介面
+════════════════════════════════════════════════ -->
 <div class="main-card">
     <h1>NIHSS LLM語音輸入測試</h1>
+
+    <!-- 醫師資訊顯示列 -->
+    <div class="doctor-bar" id="doctorBar">
+        👤 <span id="doctorInfo">載入中...</span>
+        <button onclick="resetDoctor()">重新填寫</button>
+    </div>
 
     <div class="section-header">
         <div class="section-title">當前評估題號</div>
@@ -158,7 +222,6 @@
             </select>
             <button id="nextBtn" class="nav-btn" onclick="changeQuestion(1)"> &gt; </button>
         </div>
-        <!-- 功能 1：勾選欄位 -->
         <div class="expected-check-container">
             <input type="checkbox" id="enableExpected">
             <label for="enableExpected">勾選醫師預期答案，協助系統辨識與資料收集</label>
@@ -187,7 +250,7 @@
                 <tr>
                     <th width="10%">題號</th>
                     <th width="40%">傳送內容</th>
-                    <th width="25%">預期結果</th> <!-- 功能 3：新增預期結果欄位 -->
+                    <th width="25%">預期結果</th>
                     <th width="25%">辨識結果</th>
                 </tr>
             </thead>
@@ -197,33 +260,105 @@
 </div>
 
 <script>
+    // ═══════════════════════════════════════════
+    // ★★★ 填入你的網址 ★★★
+    // ═══════════════════════════════════════════
+
+    // 1. ngrok 的 HTTPS 網址（每次重啟 ngrok 後需更新）
+    const LLM_URL = "https://你的ngrok網址.ngrok-free.app/evaluate";
+
+    // 2. Google Apps Script 部署後的網址（設定一次就不用改）
+    const SHEET_URL = "https://script.google.com/macros/s/你的Apps_Script網址/exec";
+
+    // ═══════════════════════════════════════════
+    // 醫師資料管理
+    // ═══════════════════════════════════════════
+    function loadDoctor() {
+        const info = localStorage.getItem('doctorInfo');
+        if (info) {
+            const d = JSON.parse(info);
+            document.getElementById('doctorInfo').textContent = `${d.name}　${d.hospital}　${d.dept}`;
+            document.getElementById('registerOverlay').style.display = 'none';
+        } else {
+            document.getElementById('registerOverlay').style.display = 'flex';
+            document.getElementById('doctorInfo').textContent = '未登錄';
+        }
+    }
+
+    function saveDoctor() {
+        const name     = document.getElementById('regName').value.trim();
+        const hospital = document.getElementById('regHospital').value.trim();
+        const dept     = document.getElementById('regDept').value.trim();
+        if (!name || !hospital || !dept) { alert("請填寫所有欄位"); return; }
+        localStorage.setItem('doctorInfo', JSON.stringify({ name, hospital, dept }));
+        loadDoctor();
+    }
+
+    function resetDoctor() {
+        if (!confirm("確定要重新填寫醫師資料嗎？")) return;
+        localStorage.removeItem('doctorInfo');
+        document.getElementById('regName').value = '';
+        document.getElementById('regHospital').value = '';
+        document.getElementById('regDept').value = '';
+        document.getElementById('registerOverlay').style.display = 'flex';
+    }
+
+    // ═══════════════════════════════════════════
+    // Google Sheets 寫入
+    // ═══════════════════════════════════════════
+    function sendToSheet(payload) {
+        const doctor = JSON.parse(localStorage.getItem('doctorInfo') || '{}');
+        const data = {
+            timestamp:       new Date().toLocaleString('zh-TW'),
+            doctor_name:     doctor.name     || "",
+            hospital:        doctor.hospital || "",
+            department:      doctor.dept     || "",
+            question:        payload.question,
+            input_text:      payload.text,
+            expected_result: payload.expected,
+            model_result:    payload.result,
+            model_type:      payload.type    || "",
+            latency:         payload.latency || ""
+        };
+
+        // 用 no-cors 送出，不等待回應（避免 CORS 問題）
+        fetch(SHEET_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        }).catch(() => {}); // 失敗不影響主功能
+    }
+
+    // ═══════════════════════════════════════════
+    // 主要功能
+    // ═══════════════════════════════════════════
     let mode = 'audio';
     let isRecording = false;
-    let pendingText = ""; // 暫存等待彈窗確認的文字
-    const LLM_URL = "https://undecided-riverbank-trash.ngrok-free.dev/evaluate";
+    let pendingText = "";
 
-    window.onload = () => { checkNavButtons(); };
+    window.onload = () => { loadDoctor(); checkNavButtons(); };
 
     function switchMode(m) {
         mode = m;
-        const audioBtn = document.getElementById('tabAudio');
+        const audioBtn  = document.getElementById('tabAudio');
         const manualBtn = document.getElementById('tabManual');
         const actionBtn = document.getElementById('actionBtn');
         const inputText = document.getElementById('inputText');
 
         if (m === 'audio') {
-            audioBtn.className = 'tab active-blue';
+            audioBtn.className  = 'tab active-blue';
             manualBtn.className = 'tab';
             actionBtn.className = 'action-btn btn-blue';
             actionBtn.innerText = '開始說話';
-            inputText.readOnly = true;
-            inputText.value = ""; 
+            inputText.readOnly  = true;
+            inputText.value     = "";
         } else {
-            audioBtn.className = 'tab';
+            audioBtn.className  = 'tab';
             manualBtn.className = 'tab active-green';
             actionBtn.className = 'action-btn btn-green';
             actionBtn.innerText = '送出辨識';
-            inputText.readOnly = false;
+            inputText.readOnly  = false;
         }
     }
 
@@ -248,13 +383,12 @@
     recognition.onresult = (event) => {
         const text = event.results[0][0].transcript;
         document.getElementById('inputText').value = text;
-        // 語音結束後觸發判斷邏輯
         processInput(text);
     };
 
     recognition.onend = () => {
         isRecording = false;
-        document.getElementById('actionBtn').innerText = (mode==='audio') ? '開始說話' : '送出辨識';
+        document.getElementById('actionBtn').innerText = (mode === 'audio') ? '開始說話' : '送出辨識';
         document.getElementById('actionBtn').classList.remove('recording');
     };
 
@@ -280,35 +414,29 @@
                 actionBtn.innerText = originalText;
                 actionBtn.classList.remove('success');
             }, 500);
-
             processInput(textInput);
             document.getElementById('inputText').value = "";
         }
     }
 
-    // 核心邏輯：判斷是否需要彈窗
     function processInput(text) {
         const needExpected = document.getElementById('enableExpected').checked;
         if (needExpected) {
-            // 1-1：顯示彈出視窗
             pendingText = text;
-            document.getElementById('modalQid').innerText = document.getElementById('questionId').options[document.getElementById('questionId').selectedIndex].text;
+            document.getElementById('modalQid').innerText =
+                document.getElementById('questionId').options[document.getElementById('questionId').selectedIndex].text;
             document.getElementById('modalContent').innerText = `「${text}」`;
             document.getElementById('modalOverlay').style.display = 'flex';
         } else {
-            // 1-2：直接送出，expected 給預設值(或不送，依電機系需求)
             callLLM(text, "無預期");
         }
     }
-    function closeModal() {
-    // 隱藏彈出視窗
-    document.getElementById('modalOverlay').style.display = 'none';
-    
-    // 清空暫存文字，防止誤送
-    pendingText = ""; 
-    }   
 
-    // 彈窗按下確認後執行
+    function closeModal() {
+        document.getElementById('modalOverlay').style.display = 'none';
+        pendingText = "";
+    }
+
     function submitWithExpected() {
         const expected = document.querySelector('input[name="expectedResult"]:checked').value;
         document.getElementById('modalOverlay').style.display = 'none';
@@ -317,35 +445,33 @@
 
     async function callLLM(text, expected) {
         const qid = document.getElementById('questionId').value;
-        const currentRow = updateTable(qid, text, expected, "AI 判讀中，請稍候...", null); 
+        const currentRow = updateTable(qid, text, expected, "AI 判讀中，請稍候...", null);
 
         try {
             const res = await fetch(LLM_URL, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json','ngrok-skip-browser-warning': 'true' },
-                body: JSON.stringify({ 
-                    question: qid, 
-                    text: text,
-                    expected: expected // 功能 2：傳送 expected
-                })
+                headers: {
+                    'Content-Type': 'application/json',
+                    'ngrok-skip-browser-warning': 'true'
+                },
+                body: JSON.stringify({ question: qid, text: text, expected: expected })
             });
             const data = await res.json();
-            
-            // 功能 4：修正判斷邏輯。
-            // 邏輯：不論 LLM 回傳的最終 success/fail，我們都要找出模型辨識出的 model_result。
-            // 假設後端回傳的 data.result 是 LLM 最終經過 expected 比對後的結果，
-            // 則 model_result = (data.result == expected) ? "成功" : "失敗" (這部分需視後端邏輯調整)
-            // 若後端直接回傳辨識內容在 data.result，則直接顯示。
-            
-            let displayResult = data.result;
-            
-            // 如果後端給的是對誤 (True/False)，我們轉換回模型判斷的內容
-            if(data.result === "success") displayResult = expected; 
-            else if(data.result === "False") displayResult = (expected === "成功") ? "失敗" : "成功";
 
-            const isSuccess = data.result === "success" || data.type !== "0";
-            finalizeRow(currentRow, displayResult + ` (${data.type})`, isSuccess);
-            
+            const isSuccess = data.result === "成功";
+            const typeLabel = data.type ? ` (${data.type})` : "";
+            finalizeRow(currentRow, data.result + typeLabel, isSuccess);
+
+            // ★ 寫入 Google Sheets
+            sendToSheet({
+                question: qid,
+                text:     text,
+                expected: expected,
+                result:   data.result,
+                type:     data.type,
+                latency:  data.latency
+            });
+
         } catch (err) {
             finalizeRow(currentRow, "連線失敗", false);
         }
@@ -356,10 +482,7 @@
         const newRow = table.insertRow(0);
         newRow.className = "new-row";
         newRow.setAttribute('data-status', 'loading');
-        
-        // 預期結果的顏色標籤
         const expClass = (expected === "成功") ? "status-success" : (expected === "失敗" ? "status-fail" : "");
-
         newRow.innerHTML = `
             <td>${qid}</td>
             <td>${content}</td>
@@ -370,7 +493,7 @@
     }
 
     function finalizeRow(row, resText, isSuccess) {
-        const resCell = row.cells[3]; // 第四欄
+        const resCell   = row.cells[3];
         const statusClass = isSuccess ? 'status-success' : 'status-fail';
         row.setAttribute('data-status', isSuccess ? 'success' : 'fail');
         resCell.innerText = resText;
