@@ -287,10 +287,9 @@
 
     function saveDoctor() {
         const name     = document.getElementById('regName').value.trim();
-        const hospital = document.getElementById('regHospital').value.trim();
         const dept     = document.getElementById('regDept').value.trim();
         if (!name || !hospital || !dept) { alert("請填寫所有欄位"); return; }
-        localStorage.setItem('doctorInfo', JSON.stringify({ name, hospital, dept }));
+        localStorage.setItem('doctorInfo', JSON.stringify({ name, hospital: "", dept }));
         loadDoctor();
     }
 
