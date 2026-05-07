@@ -162,6 +162,7 @@
         <h2>醫師資料登錄</h2>
         <p>第一次使用請填寫以下資料，之後會自動記住</p>
         <input id="regName"     class="register-input" placeholder="姓名" />
+        <input id="regHospital" class="register-input" placeholder="醫院" />
         <input id="regDept"     class="register-input" placeholder="科別" />
         <button class="register-btn" onclick="saveDoctor()">開始使用</button>
     </div>
@@ -287,9 +288,10 @@
 
     function saveDoctor() {
         const name     = document.getElementById('regName').value.trim();
+        const hospital = document.getElementById('regHospital').value.trim();
         const dept     = document.getElementById('regDept').value.trim();
         if (!name || !hospital || !dept) { alert("請填寫所有欄位"); return; }
-        localStorage.setItem('doctorInfo', JSON.stringify({ name, hospital: "", dept }));
+        localStorage.setItem('doctorInfo', JSON.stringify({ name, hospital, dept }));
         loadDoctor();
     }
 
