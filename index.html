@@ -11,7 +11,6 @@
             --bg-gray: #f8f9fa;
             --text-gray: #4e4e4e;
             --border-color: #e7e7e7;
-            --disabled-gray: #e0e0e0;
             --disabled-text: #b0b0b0;
         }
 
@@ -35,56 +34,37 @@
 
         h1 { color: var(--primary-blue); font-size: 32px; text-align: center; margin-bottom: 30px; }
 
-        /* 醫師資訊 bar */
         .doctor-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: #f0f5ff;
-            border: 1px solid #d0e0ff;
-            border-radius: 12px;
-            padding: 10px 18px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            color: #333;
+            display: flex; align-items: center; justify-content: space-between;
+            background: #f0f5ff; border: 1px solid #d0e0ff;
+            border-radius: 12px; padding: 10px 18px;
+            margin-bottom: 20px; font-size: 14px; color: #333;
         }
         .doctor-bar span { font-weight: 600; color: var(--primary-blue); }
         .doctor-bar button {
-            background: none;
-            border: 1px solid #aac4ff;
-            border-radius: 8px;
-            padding: 4px 12px;
-            font-size: 13px;
-            color: var(--primary-blue);
-            cursor: pointer;
+            background: none; border: 1px solid #aac4ff;
+            border-radius: 8px; padding: 4px 12px;
+            font-size: 13px; color: var(--primary-blue); cursor: pointer;
         }
         .doctor-bar button:hover { background: #e0ecff; }
 
-        /* 題號選擇區塊 */
         .section-header {
-            background: var(--bg-gray);
-            border-radius: 20px;
-            padding: 25px;
-            text-align: center;
-            margin-bottom: 25px;
+            background: var(--bg-gray); border-radius: 20px;
+            padding: 25px; text-align: center; margin-bottom: 25px;
         }
         .section-title { font-size: 20px; font-weight: 700; margin-bottom: 15px; }
-
         .selector-group { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 15px; }
-        .nav-btn { width: 36px; height: 36px; border-radius: 50%; border: none; background: #f1f1f1; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .nav-btn { width: 36px; height: 36px; border-radius: 50%; border: none; background: #f1f1f1; cursor: pointer; transition: 0.2s; }
         .nav-btn:disabled { background: white; color: var(--disabled-text); border: 1px solid var(--border-color); cursor: not-allowed; }
         select { flex: 1; max-width: 400px; padding: 10px 15px; border-radius: 10px; border: 1px solid var(--border-color); font-size: 16px; }
-
         .expected-check-container { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 16px; color: #666; }
         .expected-check-container input { cursor: pointer; }
 
-        /* 模式切換 */
         .tab-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
         .tab { padding: 12px; border-radius: 15px; border: none; font-weight: 700; cursor: pointer; background: #f5f5f5; transition: 0.3s; }
         .tab.active-blue { background: var(--primary-blue); color: white; }
         .tab.active-green { background: var(--primary-green); color: white; }
 
-        /* 輸入面板 */
         .input-panel { border: 1px solid var(--border-color); border-radius: 20px; padding: 20px; min-height: 180px; display: flex; flex-direction: column; justify-content: space-between; }
         textarea { width: 100%; border: none; font-size: 16px; resize: none; outline: none; min-height: 100px; background: transparent; }
         textarea[readonly] { color: #888; }
@@ -94,23 +74,20 @@
         .btn-green { border: 1px solid var(--primary-green); color: var(--primary-green); }
         .btn-green.success { background-color: var(--primary-green) !important; color: white !important; }
 
-        /* 彈出視窗 (Modal) */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal-card { background: white; width: 90%; max-width: 500px; padding: 42px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; position: relative; }
         .modal-qid { background: #f8f9fa; padding: 10px; border-radius: 10px; margin-bottom: 15px; font-weight: bold; border: 1px solid #eee; }
-        .modal-text { font-style: normal; color: #555; margin-bottom: 25px; line-height: 1.2; }
-        .modal-options { display: flex; justify-content: center; gap: 30px; margin-bottom: 15px;}
+        .modal-text { color: #555; margin-bottom: 25px; line-height: 1.2; }
+        .modal-options { display: flex; justify-content: center; gap: 30px; margin-bottom: 15px; }
         .modal-option { display: flex; align-items: center; gap: 12px; cursor: pointer; font-weight: bold; font-size: 16px; }
         .modal-option input { width: 18px; height: 18px; }
         .modal-close-x { position: absolute; top: 15px; right: 20px; font-size: 25px; color: #ccc; cursor: pointer; line-height: 1; transition: 0.2s; }
         .modal-close-x:hover { color: #E1575A; }
 
-        /* 註冊 Modal */
         .register-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5);
-            display: flex; justify-content: center; align-items: center;
-            z-index: 2000;
+            display: flex; justify-content: center; align-items: center; z-index: 2000;
         }
         .register-card {
             background: white; padding: 44px 40px; border-radius: 24px;
@@ -122,22 +99,19 @@
         .register-input {
             width: 100%; padding: 11px 15px; margin: 7px 0;
             border: 1px solid var(--border-color); border-radius: 12px;
-            font-size: 16px; box-sizing: border-box; outline: none;
-            transition: border 0.2s;
+            font-size: 16px; box-sizing: border-box; outline: none; transition: border 0.2s;
         }
         .register-input:focus { border-color: var(--primary-blue); }
         .register-btn {
-            width: 100%; padding: 13px; margin-top: 16px;
-            border-radius: 14px; border: none;
+            width: 100%; padding: 13px; margin-top: 16px; border-radius: 14px; border: none;
             background: var(--primary-blue); color: white;
-            font-size: 16px; font-weight: 700; cursor: pointer;
-            transition: 0.2s;
+            font-size: 16px; font-weight: 700; cursor: pointer; transition: 0.2s;
         }
         .register-btn:hover { background: #1560c8; }
 
-        /* 結果表格 */
         .result-section { margin-top: 40px; background: var(--bg-gray); border-radius: 20px; padding: 25px; }
-        .filter-container { margin: 15px 0; display: flex; gap: 10px; }
+        .result-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
+        .filter-container { display: flex; gap: 10px; }
         .filter-btn { padding: 6px 18px; border-radius: 20px; border: 1px solid #ddd; background: white; cursor: pointer; font-size: 14px; font-weight: bold; }
         .filter-btn.active[data-type="all"] { background: #e0e0e0; }
         .filter-btn.active[data-type="success"] { background: #42B72A; color: white; }
@@ -149,14 +123,21 @@
         .status-success { color: #42B72A; font-weight: bold; }
         .status-fail { color: #E1575A; font-weight: bold; }
 
+        .exclude-btn {
+            background: none; border: none; color: #ccc;
+            cursor: pointer; font-size: 16px; padding: 2px 6px;
+            border-radius: 4px; transition: 0.2s;
+        }
+        .exclude-btn:hover { color: #E1575A; background: #fff0f0; }
+
+        .history-status { text-align: center; color: #888; font-size: 14px; padding: 12px; }
+
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
     </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════════
-     註冊 Modal（第一次使用才會出現）
-════════════════════════════════════════════════ -->
+<!-- 註冊 Modal -->
 <div id="registerOverlay" class="register-overlay">
     <div class="register-card">
         <h2>醫師資料登錄</h2>
@@ -168,9 +149,7 @@
     </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════
-     預期答案 Modal
-════════════════════════════════════════════════ -->
+<!-- 預期答案 Modal -->
 <div id="modalOverlay" class="modal-overlay">
     <div class="modal-card">
         <span class="modal-close-x" onclick="closeModal()">&times;</span>
@@ -188,14 +167,11 @@
     </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════
-     主介面
-════════════════════════════════════════════════ -->
+<!-- 主介面 -->
 <div class="main-card">
     <h1>NIHSS LLM語音輸入測試</h1>
 
-    <!-- 醫師資訊顯示列 -->
-    <div class="doctor-bar" id="doctorBar">
+    <div class="doctor-bar">
         👤 <span id="doctorInfo">載入中...</span>
         <button onclick="resetDoctor()">重新填寫</button>
     </div>
@@ -240,19 +216,24 @@
     </div>
 
     <div class="result-section">
-        <div class="section-title">辨識結果總覽</div>
-        <div class="filter-container">
-            <button class="filter-btn active" data-type="all" onclick="filterTable('all', this)">全部總覽</button>
-            <button class="filter-btn" data-type="success" onclick="filterTable('success', this)">判讀成功</button>
-            <button class="filter-btn" data-type="fail" onclick="filterTable('fail', this)">判讀失敗</button>
+        <div class="result-header">
+            <div class="section-title" style="margin:0">辨識結果總覽</div>
+            <div class="filter-container">
+                <button class="filter-btn active" data-type="all" onclick="filterTable('all', this)">全部</button>
+                <button class="filter-btn" data-type="success" onclick="filterTable('success', this)">成功</button>
+                <button class="filter-btn" data-type="fail" onclick="filterTable('fail', this)">失敗</button>
+            </div>
         </div>
+        <div id="historyStatus" class="history-status">載入歷史紀錄中...</div>
         <table id="resultTable">
             <thead>
                 <tr>
                     <th width="10%">題號</th>
-                    <th width="40%">傳送內容</th>
-                    <th width="25%">預期結果</th>
-                    <th width="25%">辨識結果</th>
+                    <th width="35%">傳送內容</th>
+                    <th width="18%">預期結果</th>
+                    <th width="22%">辨識結果</th>
+                    <th width="10%">時間</th>
+                    <th width="5%"></th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -265,11 +246,11 @@
     // ★★★ 填入你的網址 ★★★
     // ═══════════════════════════════════════════
 
-    // 1. ngrok 的 HTTPS 網址（每次重啟 ngrok 後需更新）
-    const LLM_URL = "https://undecided-riverbank-trash.ngrok-free.dev/evaluate";
+    // 1. ngrok 網址（每次重啟 ngrok 後更新）
+    const LLM_URL = "https://你的ngrok網址.ngrok-free.app/evaluate";
 
-    // 2. Google Apps Script 部署後的網址（設定一次就不用改）
-    const SHEET_URL = "https://script.google.com/macros/s/AKfycbyaLEUzXod3ZiHHL596OIJzyF2Rx7s6-xPiPgCxfi7KFAm0h5t6ejW3JuhPgptke6ZV/exec";
+    // 2. Google Apps Script 網址（部署一次後固定）
+    const SHEET_URL = "https://script.google.com/macros/s/你的Apps_Script網址/exec";
 
     // ═══════════════════════════════════════════
     // 醫師資料管理
@@ -280,9 +261,11 @@
             const d = JSON.parse(info);
             document.getElementById('doctorInfo').textContent = `${d.name}　${d.hospital}　${d.dept}`;
             document.getElementById('registerOverlay').style.display = 'none';
+            loadHistory(d.name);
         } else {
             document.getElementById('registerOverlay').style.display = 'flex';
             document.getElementById('doctorInfo').textContent = '未登錄';
+            document.getElementById('historyStatus').textContent = '請先登錄醫師資料';
         }
     }
 
@@ -301,16 +284,102 @@
         document.getElementById('regName').value = '';
         document.getElementById('regHospital').value = '';
         document.getElementById('regDept').value = '';
+        document.getElementById('resultTable').getElementsByTagName('tbody')[0].innerHTML = '';
+        document.getElementById('historyStatus').textContent = '請先登錄醫師資料';
         document.getElementById('registerOverlay').style.display = 'flex';
+    }
+
+    // ═══════════════════════════════════════════
+    // 從 Google Sheets 載入歷史紀錄
+    // ═══════════════════════════════════════════
+    async function loadHistory(doctorName) {
+        const statusEl = document.getElementById('historyStatus');
+        statusEl.textContent = '載入歷史紀錄中...';
+        try {
+            const res = await fetch(`${SHEET_URL}?doctor=${encodeURIComponent(doctorName)}`);
+            const records = await res.json();
+
+            statusEl.textContent = '';
+
+            if (records.length === 0) {
+                statusEl.textContent = '目前沒有歷史紀錄';
+                return;
+            }
+
+            const tbody = document.getElementById('resultTable').getElementsByTagName('tbody')[0];
+            tbody.innerHTML = '';
+
+            // 最新的排在最上面
+            records.reverse().forEach(r => {
+                addRowToTable(
+                    r.question,
+                    r.input_text,
+                    r.expected_result,
+                    r.model_result + (r.model_type ? ` (${r.model_type})` : ""),
+                    r.model_result === "成功",
+                    r.timestamp,
+                    r,
+                    true // 加在最後（歷史紀錄）
+                );
+            });
+
+        } catch (err) {
+            statusEl.textContent = '歷史紀錄載入失敗，請確認 Apps Script 網址是否正確';
+        }
+    }
+
+    // ═══════════════════════════════════════════
+    // 表格操作
+    // ═══════════════════════════════════════════
+    function addRowToTable(qid, content, expected, result, isSuccess, timestamp, sheetData, atEnd = false) {
+        const tbody = document.getElementById('resultTable').getElementsByTagName('tbody')[0];
+        const row = atEnd ? tbody.insertRow(tbody.rows.length) : tbody.insertRow(0);
+        row.setAttribute('data-status', isSuccess ? 'success' : 'fail');
+        if (sheetData) row.dataset.sheetData = JSON.stringify(sheetData);
+
+        const expClass = (expected === "成功") ? "status-success" : (expected === "失敗" ? "status-fail" : "");
+        const resClass = isSuccess ? 'status-success' : 'status-fail';
+        const timeStr  = timestamp ? String(timestamp).slice(5, 16) : '';
+
+        row.innerHTML = `
+            <td>${qid}</td>
+            <td>${content}</td>
+            <td class="${expClass}">${expected}</td>
+            <td class="${resClass}">${result}</td>
+            <td style="color:#aaa;font-size:12px;">${timeStr}</td>
+            <td><button class="exclude-btn" onclick="excludeRow(this)" title="排除此筆資料">✕</button></td>
+        `;
+        return row;
+    }
+
+    function excludeRow(btn) {
+        if (!confirm("確定要排除這筆資料嗎？\nSheets 上會標記為 excluded，原始資料保留。")) return;
+        const row = btn.closest('tr');
+        const data = JSON.parse(row.dataset.sheetData || '{}');
+
+        fetch(SHEET_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: "exclude", ...data })
+        }).catch(() => {});
+
+        row.style.opacity = '0.3';
+        row.style.textDecoration = 'line-through';
+        row.setAttribute('data-status', 'excluded');
+        btn.disabled = true;
     }
 
     // ═══════════════════════════════════════════
     // Google Sheets 寫入
     // ═══════════════════════════════════════════
     function sendToSheet(payload) {
-        const doctor = JSON.parse(localStorage.getItem('doctorInfo') || '{}');
+        const doctor    = JSON.parse(localStorage.getItem('doctorInfo') || '{}');
+        const timestamp = new Date().toLocaleString('zh-TW');
+
         const data = {
-            timestamp:       new Date().toLocaleString('zh-TW'),
+            action:          "insert",
+            timestamp:       timestamp,
             doctor_name:     doctor.name     || "",
             hospital:        doctor.hospital || "",
             department:      doctor.dept     || "",
@@ -318,17 +387,18 @@
             input_text:      payload.text,
             expected_result: payload.expected,
             model_result:    payload.result,
+            is_correct:      payload.result === payload.expected ? "正確" : "錯誤",
             model_type:      payload.type    || "",
-            latency:         payload.latency || ""
         };
 
-        // 用 no-cors 送出，不等待回應（避免 CORS 問題）
         fetch(SHEET_URL, {
             method: 'POST',
             mode: 'no-cors',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
-        }).catch(() => {}); // 失敗不影響主功能
+        }).catch(() => {});
+
+        return data;
     }
 
     // ═══════════════════════════════════════════
@@ -346,7 +416,6 @@
         const manualBtn = document.getElementById('tabManual');
         const actionBtn = document.getElementById('actionBtn');
         const inputText = document.getElementById('inputText');
-
         if (m === 'audio') {
             audioBtn.className  = 'tab active-blue';
             manualBtn.className = 'tab';
@@ -365,7 +434,7 @@
 
     function changeQuestion(dir) {
         const select = document.getElementById('questionId');
-        let newIndex = select.selectedIndex + dir;
+        const newIndex = select.selectedIndex + dir;
         if (newIndex >= 0 && newIndex < select.options.length) {
             select.selectedIndex = newIndex;
             checkNavButtons();
@@ -396,7 +465,6 @@
     function handleAction() {
         const textInput = document.getElementById('inputText').value;
         const actionBtn = document.getElementById('actionBtn');
-
         if (mode === 'audio') {
             if (!isRecording) {
                 isRecording = true;
@@ -424,8 +492,8 @@
         const needExpected = document.getElementById('enableExpected').checked;
         if (needExpected) {
             pendingText = text;
-            document.getElementById('modalQid').innerText =
-                document.getElementById('questionId').options[document.getElementById('questionId').selectedIndex].text;
+            const select = document.getElementById('questionId');
+            document.getElementById('modalQid').innerText = select.options[select.selectedIndex].text;
             document.getElementById('modalContent').innerText = `「${text}」`;
             document.getElementById('modalOverlay').style.display = 'flex';
         } else {
@@ -446,7 +514,20 @@
 
     async function callLLM(text, expected) {
         const qid = document.getElementById('questionId').value;
-        const currentRow = updateTable(qid, text, expected, "AI 判讀中，請稍候...", null);
+
+        // 先插入 loading 列在最上方
+        const tbody = document.getElementById('resultTable').getElementsByTagName('tbody')[0];
+        const loadingRow = tbody.insertRow(0);
+        loadingRow.setAttribute('data-status', 'loading');
+        const expClass = (expected === "成功") ? "status-success" : (expected === "失敗" ? "status-fail" : "");
+        loadingRow.innerHTML = `
+            <td>${qid}</td>
+            <td>${text}</td>
+            <td class="${expClass}">${expected}</td>
+            <td class="status-loading">AI 判讀中...</td>
+            <td style="color:#aaa;font-size:12px;">剛剛</td>
+            <td></td>
+        `;
 
         try {
             const res = await fetch(LLM_URL, {
@@ -455,50 +536,27 @@
                     'Content-Type': 'application/json',
                     'ngrok-skip-browser-warning': 'true'
                 },
-                body: JSON.stringify({ question: qid, text: text, expected: expected })
+                body: JSON.stringify({ question: qid, text, expected })
             });
             const data = await res.json();
 
             const isSuccess = data.result === "成功";
             const typeLabel = data.type ? ` (${data.type})` : "";
-            finalizeRow(currentRow, data.result + typeLabel, isSuccess);
 
-            // ★ 寫入 Google Sheets
-            sendToSheet({
-                question: qid,
-                text:     text,
-                expected: expected,
-                result:   data.result,
-                type:     data.type,
-                latency:  data.latency
-            });
+            loadingRow.setAttribute('data-status', isSuccess ? 'success' : 'fail');
+            loadingRow.cells[3].textContent = data.result + typeLabel;
+            loadingRow.cells[3].className   = isSuccess ? 'status-success' : 'status-fail';
+
+            // 寫入 Sheets 並存 sheetData 供刪除用
+            const sheetData = sendToSheet({ question: qid, text, expected, result: data.result, type: data.type });
+            loadingRow.dataset.sheetData = JSON.stringify(sheetData);
+            loadingRow.cells[5].innerHTML = `<button class="exclude-btn" onclick="excludeRow(this)" title="排除此筆資料">✕</button>`;
 
         } catch (err) {
-            finalizeRow(currentRow, "連線失敗", false);
+            loadingRow.setAttribute('data-status', 'fail');
+            loadingRow.cells[3].textContent = "連線失敗";
+            loadingRow.cells[3].className   = 'status-fail';
         }
-    }
-
-    function updateTable(qid, content, expected, res, isSuccess) {
-        const table = document.getElementById('resultTable').getElementsByTagName('tbody')[0];
-        const newRow = table.insertRow(0);
-        newRow.className = "new-row";
-        newRow.setAttribute('data-status', 'loading');
-        const expClass = (expected === "成功") ? "status-success" : (expected === "失敗" ? "status-fail" : "");
-        newRow.innerHTML = `
-            <td>${qid}</td>
-            <td>${content}</td>
-            <td class="${expClass}">${expected}</td>
-            <td class="status-loading">${res}</td>
-        `;
-        return newRow;
-    }
-
-    function finalizeRow(row, resText, isSuccess) {
-        const resCell   = row.cells[3];
-        const statusClass = isSuccess ? 'status-success' : 'status-fail';
-        row.setAttribute('data-status', isSuccess ? 'success' : 'fail');
-        resCell.innerText = resText;
-        resCell.className = statusClass;
     }
 
     function filterTable(type, btn) {
