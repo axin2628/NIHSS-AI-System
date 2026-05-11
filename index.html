@@ -324,6 +324,7 @@
             });
 
         } catch (err) {
+            console.log("loadHistory 錯誤：", err);
             statusEl.textContent = '歷史紀錄載入失敗，請確認 Apps Script 網址是否正確';
         }
     }
