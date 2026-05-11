@@ -295,15 +295,12 @@
     async function loadHistory(doctorName) {
         const statusEl = document.getElementById('historyStatus');
         statusEl.textContent = '載入歷史紀錄中...';
-        try {
-            const res = await fetch(`${SHEET_URL}?doctor=${encodeURIComponent(doctorName)}`, {
-                redirect: 'follow',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
+         try {
+            const res = await fetch(`${SHEET_URL}?doctor=${encodeURIComponent(doctorName)}`);
             const records = await res.json();
+
             statusEl.textContent = '';
+
             if (records.length === 0) {
                 statusEl.textContent = '目前沒有歷史紀錄';
                 return;
