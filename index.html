@@ -349,6 +349,7 @@
         if (!confirm("確定要排除這筆資料嗎？\nSheets 上會標記為 excluded，原始資料保留。")) return;
         const row = btn.closest('tr');
         const data = JSON.parse(row.dataset.sheetData || '{}');
+        console.log("送出的 exclude 資料：", data); // 加這行
 
         fetch(SHEET_URL, {
             method: 'POST',
