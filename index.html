@@ -350,6 +350,7 @@
         const row = btn.closest('tr');
         const data = JSON.parse(row.dataset.sheetData || '{}');
         console.log("送出的 exclude 資料：", data); // 加這行
+        console.log("完整資料：", JSON.stringify(data));
 
         fetch(SHEET_URL, {
             method: 'POST',
