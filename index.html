@@ -309,6 +309,8 @@
             const tbody = document.getElementById('resultTable').getElementsByTagName('tbody')[0];
             tbody.innerHTML = '';
             records.reverse().forEach(r => {
+                const doctor = JSON.parse(localStorage.getItem('doctorInfo') || '{}');
+                r.doctor_name = doctor.name;  // 補上這行
                 addRowToTable(
                     r.question, r.input_text, r.expected_result,
                     r.model_result + (r.model_type ? ` (${r.model_type})` : ""),
