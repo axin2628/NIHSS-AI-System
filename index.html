@@ -295,37 +295,29 @@
     async function loadHistory(doctorName) {
         const statusEl = document.getElementById('historyStatus');
         statusEl.textContent = '載入歷史紀錄中...';
-         try {
-            const res = await fetch(`${SHEET_URL}?doctor=${encodeURIComponent(doctorName)}`);
+        try {
+            const baseUrl = LLM_URL.replace('/evaluate', '');
+            const res = await fetch(`${baseUrl}/history?doctor=${encodeURIComponent(doctorName)}`, {
+                headers: { 'ngrok-skip-browser-warning': 'true' }
+            });
             const records = await res.json();
-
             statusEl.textContent = '';
-
             if (records.length === 0) {
                 statusEl.textContent = '目前沒有歷史紀錄';
                 return;
             }
-
             const tbody = document.getElementById('resultTable').getElementsByTagName('tbody')[0];
             tbody.innerHTML = '';
-
-            // 最新的排在最上面
             records.reverse().forEach(r => {
                 addRowToTable(
-                    r.question,
-                    r.input_text,
-                    r.expected_result,
+                    r.question, r.input_text, r.expected_result,
                     r.model_result + (r.model_type ? ` (${r.model_type})` : ""),
-                    r.model_result === "成功",
-                    r.timestamp,
-                    r,
-                    true // 加在最後（歷史紀錄）
+                    r.model_result === "成功", r.timestamp, r, true
                 );
             });
-
         } catch (err) {
             console.log("loadHistory 錯誤：", err);
-            statusEl.textContent = '歷史紀錄載入失敗，請確認 Apps Script 網址是否正確';
+            statusEl.textContent = '歷史紀錄載入失敗';
         }
     }
 
