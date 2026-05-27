@@ -236,11 +236,10 @@
         <table id="resultTable">
             <thead>
                 <tr>
-                    <th width="10%">題號</th>
-                    <th width="35%">傳送內容</th>
-                    <th width="18%">醫師預期結果</th>
-                    <th width="22%">系統辨識結果</th>
-                    <th width="10%">時間</th>
+                    <th width="12%">題號</th>
+                    <th width="48%">傳送內容</th>
+                    <th width="20%">醫師預期結果</th>
+                    <th width="20%">AI辨識結果</th>
                     <th width="5%"></th>
                 </tr>
             </thead>
@@ -349,7 +348,6 @@
             <td>${content}</td>
             <td class="${expClass}">${expected}</td>
             <td class="${resClass}">${result}</td>
-            <td style="color:#aaa;font-size:12px;">${timeStr}</td>
             <td><button class="exclude-btn" onclick="excludeRow(this)" title="排除此筆資料">✕</button></td>
         `;
         return row;
@@ -564,7 +562,7 @@
             // 寫入 Sheets 並存 sheetData 供刪除用
             const sheetData = sendToSheet({ question: qid, text, expected, result: data.result, type: data.type });
             loadingRow.dataset.sheetData = JSON.stringify(sheetData);
-            loadingRow.cells[5].innerHTML = `<button class="exclude-btn" onclick="excludeRow(this)" title="排除此筆資料">✕</button>`;
+            loadingRow.cells[4].innerHTML = `<button class="exclude-btn" onclick="excludeRow(this)" title="排除此筆資料">✕</button>`;
 
         } catch (err) {
             loadingRow.setAttribute('data-status', 'fail');
