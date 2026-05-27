@@ -131,7 +131,15 @@
         .exclude-btn:hover { color: #E1575A; background: #fff0f0; }
 
         .history-status { text-align: center; color: #888; font-size: 14px; padding: 12px; }
-
+        /* 讓語音模式下的提示字變淡藍色 */
+        .tab-group:has(#tabAudio.active-blue) ~ .input-panel textarea::placeholder {
+            color: #a0c6f9;
+        }
+        
+        /* 讓鍵盤模式下的提示字變淡綠色 */
+        .tab-group:has(#tabManual.active-green) ~ .input-panel textarea::placeholder {
+            color: #a7e09a;
+        }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
     </style>
 </head>
@@ -409,23 +417,32 @@
 
     function switchMode(m) {
         mode = m;
-        const audioBtn  = document.getElementById('tabAudio');
+        const audioBtn = document.getElementById('tabAudio');
         const manualBtn = document.getElementById('tabManual');
         const actionBtn = document.getElementById('actionBtn');
         const inputText = document.getElementById('inputText');
+    
         if (m === 'audio') {
-            audioBtn.className  = 'tab active-blue';
+            audioBtn.className = 'tab active-blue';
             manualBtn.className = 'tab';
             actionBtn.className = 'action-btn btn-blue';
             actionBtn.innerText = '開始說話';
-            inputText.readOnly  = true;
-            inputText.value     = "";
+            
+            // --- 語音模式優化 ---
+            inputText.placeholder = '此區域顯示語音輸入的文字...';
+            inputText.style.color = 'var(--primary-blue)'; // 文字改成藍色
+            inputText.readOnly = true; // 鎖定編輯
+            inputText.value = ""; 
         } else {
-            audioBtn.className  = 'tab';
+            audioBtn.className = 'tab';
             manualBtn.className = 'tab active-green';
             actionBtn.className = 'action-btn btn-green';
             actionBtn.innerText = '送出辨識';
-            inputText.readOnly  = false;
+            
+            // --- 鍵盤模式優化 ---
+            inputText.placeholder = '請於此區域輸入指令...';
+            inputText.style.color = 'var(--primary-green)'; // 文字改成綠色
+            inputText.readOnly = false; // 開放編輯
         }
     }
 
