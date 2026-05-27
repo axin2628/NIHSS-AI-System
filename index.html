@@ -185,31 +185,31 @@
     </div>
 
     <div class="section-header">
-        <div class="section-title">當前評估題號</div>
+        <div class="section-title">目前測試題號</div>
         <div class="selector-group">
             <button id="prevBtn" class="nav-btn" onclick="changeQuestion(-1)"> &lt; </button>
             <select id="questionId" onchange="checkNavButtons()">
                 <option value="1A">1A: Level of consciousness</option>
-                <option value="1B">1B: LOC Questions</option>
-                <option value="1C">1C: LOC Commands</option>
+                <option value="1B">1B: LOC Questions（詢問月份、年齡）</option>
+                <option value="1C">1C: LOC Commands（執行命令：睜、閉眼；握拳、放開）</option>
                 <option value="2">2: Best Gaze</option>
                 <option value="3">3: Visual</option>
-                <option value="4">4: Facial Palsy</option>
-                <option value="5aL">5aL: Left Arm</option>
-                <option value="5bR">5bR: Right Arm</option>
-                <option value="6aL">6aL: Left Leg</option>
-                <option value="6bR">6bR: Right Leg</option>
+                <option value="4">4: Facial Palsy（執行命令：露齒及閉眼）</option>
+                <option value="5aL">5aL: Left Arm（請病人手平舉90度，計數10秒）</option>
+                <option value="5bR">5bR: Right Arm（請病人手平舉90度，計數10秒）</option>
+                <option value="6aL">6aL: Left Leg（請病人平躺，腿抬起30度，計數5秒）</option>
+                <option value="6bR">6bR: Right Leg（請病人平躺，腿抬起30度，計數5秒）</option>
                 <option value="7">7: Limb Ataxia</option>
                 <option value="8">8: Sensory</option>
-                <option value="9">9: Best Language</option>
-                <option value="10">10: Dysarthria</option>
+                <option value="9">9: Best Language（測試病人表達流暢、命名、複述及了解程度）</option>
+                <option value="10">10: Dysarthria（測試視覺、觸覺、聽覺其中任一項刺激反應消失）</option>
                 <option value="11">11: Extinction and Inattention</option>
             </select>
             <button id="nextBtn" class="nav-btn" onclick="changeQuestion(1)"> &gt; </button>
         </div>
         <div class="expected-check-container">
             <input type="checkbox" id="enableExpected">
-            <label for="enableExpected">勾選醫師預期答案，協助系統辨識與資料收集</label>
+            <label for="enableExpected">若勾選此項，送出辨識前需選擇預期結果，以利系統收集資料於往後提高辨識成功率</label>
         </div>
     </div>
 
@@ -227,9 +227,9 @@
         <div class="result-header">
             <div class="section-title" style="margin:0">辨識結果總覽</div>
             <div class="filter-container">
-                <button class="filter-btn active" data-type="all" onclick="filterTable('all', this)">全部</button>
-                <button class="filter-btn" data-type="success" onclick="filterTable('success', this)">成功</button>
-                <button class="filter-btn" data-type="fail" onclick="filterTable('fail', this)">失敗</button>
+                <button class="filter-btn active" data-type="all" onclick="filterTable('all', this)">全部總覽</button>
+                <button class="filter-btn" data-type="success" onclick="filterTable('success', this)">辨識成功</button>
+                <button class="filter-btn" data-type="fail" onclick="filterTable('fail', this)">辨識失敗</button>
             </div>
         </div>
         <div id="historyStatus" class="history-status">載入歷史紀錄中...</div>
@@ -238,8 +238,8 @@
                 <tr>
                     <th width="10%">題號</th>
                     <th width="35%">傳送內容</th>
-                    <th width="18%">預期結果</th>
-                    <th width="22%">辨識結果</th>
+                    <th width="18%">醫師預期結果</th>
+                    <th width="22%">系統辨識結果</th>
                     <th width="10%">時間</th>
                     <th width="5%"></th>
                 </tr>
